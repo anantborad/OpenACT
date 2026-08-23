@@ -1,6 +1,5 @@
-package com.anantborad.act.ui.theme
+package com.anantborad.act.core.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme

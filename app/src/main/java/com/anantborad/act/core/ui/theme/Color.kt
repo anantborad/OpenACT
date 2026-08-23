@@ -1,4 +1,4 @@
-package com.anantborad.act.ui.theme
+package com.anantborad.act.core.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
