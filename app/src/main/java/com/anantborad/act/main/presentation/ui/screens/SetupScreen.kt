@@ -16,11 +16,13 @@ import com.anantborad.act.core.ui.theme.SciencePurple
 import com.anantborad.act.main.domain.model.PracticeSubject
 import com.anantborad.act.main.presentation.ui.components.ActButton
 import com.anantborad.act.main.presentation.ui.components.ActHeader
+import com.anantborad.act.main.presentation.viewmodels.SetupViewModel
 
 @Composable
 fun SetupScreen(
+    viewModel: SetupViewModel,
     subject: PracticeSubject,
-    onStartClick: () -> Unit = {},
+    onStartClick: (count: Int, difficulty: String) -> Unit = { _, _ -> },
     onBackClick: () -> Unit = {}
 ) {
     var questionCount by remember { mutableStateOf(10f) }
@@ -39,7 +41,7 @@ fun SetupScreen(
             Box(modifier = Modifier.padding(24.dp)) {
                 ActButton(
                     text = "Start Practice",
-                    onClick = onStartClick,
+                    onClick = { onStartClick(questionCount.toInt(), difficulty) },
                     containerColor = subjectColor
                 )
             }

@@ -20,9 +20,11 @@ import com.anantborad.act.core.ui.theme.*
 import com.anantborad.act.main.domain.model.PracticeSubject
 import com.anantborad.act.main.presentation.ui.components.ActHeader
 import com.anantborad.act.main.presentation.ui.components.ActSubjectCard
+import com.anantborad.act.main.presentation.viewmodels.HubViewModel
 
 @Composable
 fun HubScreen(
+    viewModel: HubViewModel,
     onSubjectClick: (PracticeSubject) -> Unit = {},
     onSkillClick: (String) -> Unit = {},
     onBackClick: () -> Unit = {}

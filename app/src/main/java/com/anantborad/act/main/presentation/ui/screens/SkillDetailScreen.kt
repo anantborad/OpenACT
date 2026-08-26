@@ -13,9 +13,11 @@ import androidx.compose.ui.unit.dp
 import com.anantborad.act.core.ui.theme.MathBlue
 import com.anantborad.act.main.presentation.ui.components.ActButton
 import com.anantborad.act.main.presentation.ui.components.ActHeader
+import com.anantborad.act.main.presentation.viewmodels.SkillDetailViewModel
 
 @Composable
 fun SkillDetailScreen(
+    viewModel: SkillDetailViewModel,
     skillName: String,
     onBackClick: () -> Unit = {},
     onStartPracticeClick: () -> Unit = {}

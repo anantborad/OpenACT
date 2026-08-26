@@ -25,9 +25,11 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.anantborad.act.main.presentation.ui.components.ActHeader
 import com.anantborad.act.main.presentation.util.MOCK_USER_STATS
+import com.anantborad.act.main.presentation.viewmodels.ProfileViewModel
 
 @Composable
 fun ProfileScreen(
+    viewModel: ProfileViewModel,
     onBackClick: () -> Unit = {}
 ) {
     Scaffold(

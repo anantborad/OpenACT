@@ -14,10 +14,14 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -27,8 +31,12 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.anantborad.act.core.ui.theme.BlueprintBlue
+import com.anantborad.act.main.data.QuestionDataSourceImpl
+import com.anantborad.act.main.data.QuestionRepositoryImpl
+import com.anantborad.act.main.domain.QuestionRepository
 import com.anantborad.act.main.domain.model.PracticeSubject
 import com.anantborad.act.main.presentation.ui.screens.*
+import com.anantborad.act.main.presentation.viewmodels.*
 
 sealed class BottomNavItem(val route: Any, val icon: ImageVector, val label: String) {
     object Home : BottomNavItem(HomeRoute, Icons.Default.Home, "Home")
@@ -39,6 +47,10 @@ sealed class BottomNavItem(val route: Any, val icon: ImageVector, val label: Str
 
 @Composable
 fun ActNavHost() {
+    val repository: QuestionRepository = remember {
+        QuestionRepositoryImpl(QuestionDataSourceImpl())
+    }
+
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
@@ -102,8 +114,18 @@ fun ActNavHost() {
                 })
             }
             composable<HomeRoute> {
+                val viewModel: HomeViewModel = viewModel(
+                    factory = object : ViewModelProvider.Factory {
+                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                            return HomeViewModel(repository) as T
+                        }
+                    }
+                )
                 HomeScreen(
-                    onQuickStartClick = { navController.navigate(SessionRoute) },
+                    viewModel = viewModel,
+                    onQuickStartClick = { 
+                        navController.navigate(SessionRoute(subject = PracticeSubject.MATH.name)) 
+                    },
                     onSubjectClick = { subject -> 
                         navController.navigate(SetupRoute(subject.name))
                     },
@@ -112,7 +134,15 @@ fun ActNavHost() {
                 )
             }
             composable<HubRoute> {
+                val viewModel: HubViewModel = viewModel(
+                    factory = object : ViewModelProvider.Factory {
+                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                            return HubViewModel(repository) as T
+                        }
+                    }
+                )
                 HubScreen(
+                    viewModel = viewModel,
                     onSubjectClick = { subject ->
                         navController.navigate(SetupRoute(subject.name))
                     },
@@ -123,52 +153,107 @@ fun ActNavHost() {
                 )
             }
             composable<SetupRoute> { backStackEntry ->
+                val viewModel: SetupViewModel = viewModel()
                 val setup: SetupRoute = backStackEntry.toRoute()
                 val subject = PracticeSubject.valueOf(setup.subject)
                 SetupScreen(
+                    viewModel = viewModel,
                     subject = subject,
-                    onStartClick = { navController.navigate(SessionRoute) },
+                    onStartClick = { count, difficulty ->
+                        navController.navigate(
+                            SessionRoute(
+                                subject = subject.name,
+                                questionCount = count,
+                                difficulty = difficulty
+                            )
+                        )
+                    },
                     onBackClick = { navController.popBackStack() }
                 )
             }
-            composable<SessionRoute> {
+            composable<SessionRoute> { backStackEntry ->
+                val route: SessionRoute = backStackEntry.toRoute()
+                val viewModel: SessionViewModel = viewModel(
+                    factory = object : ViewModelProvider.Factory {
+                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                            return SessionViewModel(repository) as T
+                        }
+                    }
+                )
                 SessionScreen(
-                    onFinishClick = { 
-                        navController.navigate(ResultsRoute) {
+                    viewModel = viewModel,
+                    subject = PracticeSubject.valueOf(route.subject),
+                    questionCount = route.questionCount,
+                    difficulty = route.difficulty,
+                    onFinishClick = { subject, score, total, time ->
+                        navController.navigate(
+                            ResultsRoute(
+                                subject = subject,
+                                score = score,
+                                total = total,
+                                timeSeconds = time
+                            )
+                        ) {
                             popUpTo(HomeRoute) { inclusive = false }
                         }
                     },
                     onCloseClick = { navController.popBackStack() }
                 )
             }
-            composable<ResultsRoute> {
+            composable<ResultsRoute> { backStackEntry ->
+                val route: ResultsRoute = backStackEntry.toRoute()
+                val viewModel: ResultsViewModel = viewModel()
                 ResultsScreen(
+                    viewModel = viewModel,
+                    subject = route.subject,
+                    score = route.score,
+                    total = route.total,
+                    timeSeconds = route.timeSeconds,
                     onHomeClick = {
                         navController.navigate(HomeRoute) {
                             popUpTo(HomeRoute) { inclusive = true }
                         }
                     },
-                    onReviewClick = { navController.navigate(ReviewRoute) }
+                    onReviewClick = { 
+                        navController.navigate(ReviewRoute(sessionId = "current")) 
+                    }
                 )
             }
-            composable<ReviewRoute> {
-                ReviewScreen(onBackClick = { navController.popBackStack() })
+            composable<ReviewRoute> { backStackEntry ->
+                val route: ReviewRoute = backStackEntry.toRoute()
+                val viewModel: ReviewViewModel = viewModel()
+                ReviewScreen(
+                    viewModel = viewModel,
+                    onBackClick = { navController.popBackStack() }
+                )
             }
             composable<StatsRoute> {
-                StatsScreen(onBackClick = { navController.popBackStack() })
+                val viewModel: StatsViewModel = viewModel()
+                StatsScreen(
+                    viewModel = viewModel,
+                    onBackClick = { navController.popBackStack() }
+                )
             }
             composable<ProfileRoute> {
-                ProfileScreen(onBackClick = { navController.popBackStack() })
+                val viewModel: ProfileViewModel = viewModel()
+                ProfileScreen(
+                    viewModel = viewModel,
+                    onBackClick = { navController.popBackStack() }
+                )
             }
             composable<ProgressRoute> {
                 ProgressScreen(onBackClick = { navController.popBackStack() })
             }
             composable<SkillDetailRoute> { backStackEntry ->
+                val viewModel: SkillDetailViewModel = viewModel()
                 val detail: SkillDetailRoute = backStackEntry.toRoute()
                 SkillDetailScreen(
+                    viewModel = viewModel,
                     skillName = detail.skillName,
                     onBackClick = { navController.popBackStack() },
-                    onStartPracticeClick = { navController.navigate(SessionRoute) }
+                    onStartPracticeClick = { 
+                        navController.navigate(SessionRoute(subject = PracticeSubject.MATH.name)) 
+                    }
                 )
             }
         }

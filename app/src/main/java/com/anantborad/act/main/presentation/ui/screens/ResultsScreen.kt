@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -18,16 +19,28 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.util.Locale
 import com.anantborad.act.core.ui.theme.MathBlue
 import com.anantborad.act.main.presentation.ui.components.ActButton
+import com.anantborad.act.main.presentation.viewmodels.ResultsViewModel
 
 @Composable
 fun ResultsScreen(
-    score: Int = 8,
-    total: Int = 10,
+    viewModel: ResultsViewModel,
+    subject: String,
+    score: Int,
+    total: Int,
+    timeSeconds: Long,
     onHomeClick: () -> Unit = {},
     onReviewClick: () -> Unit = {}
 ) {
+    val timeString = remember(timeSeconds) {
+        val mins = timeSeconds / 60
+        val secs = timeSeconds % 60
+        String.format(Locale.getDefault(), "%d:%02d", mins, secs)
+    }
+    val accuracy = if (total > 0) (score * 100) / total else 0
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
@@ -57,7 +70,7 @@ fun ResultsScreen(
             Spacer(modifier = Modifier.height(32.dp))
 
             Text(
-                text = "Session Complete!",
+                text = "${subject.lowercase().replaceFirstChar { it.uppercase() }} Complete!",
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold
             )
@@ -83,9 +96,9 @@ fun ResultsScreen(
                     modifier = Modifier.padding(24.dp),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    ResultStat(label = "Accuracy", value = "${(score * 100) / total}%")
-                    ResultStat(label = "Time", value = "4:20")
-                    ResultStat(label = "XP Gained", value = "+120")
+                    ResultStat(label = "Accuracy", value = "$accuracy%")
+                    ResultStat(label = "Time", value = timeString)
+                    ResultStat(label = "XP Gained", value = "+${score * 20}")
                 }
             }
 

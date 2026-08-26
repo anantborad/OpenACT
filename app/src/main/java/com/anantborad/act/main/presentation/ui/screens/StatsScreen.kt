@@ -19,9 +19,11 @@ import com.anantborad.act.core.ui.theme.MathBlue
 import com.anantborad.act.core.ui.theme.ReadingEmerald
 import com.anantborad.act.main.presentation.ui.components.ActHeader
 import com.anantborad.act.main.presentation.util.MOCK_USER_STATS
+import com.anantborad.act.main.presentation.viewmodels.StatsViewModel
 
 @Composable
 fun StatsScreen(
+    viewModel: StatsViewModel,
     onBackClick: () -> Unit = {}
 ) {
     Scaffold(

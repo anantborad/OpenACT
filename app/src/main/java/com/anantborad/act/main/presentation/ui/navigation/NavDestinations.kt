@@ -15,13 +15,24 @@ object HubRoute
 data class SetupRoute(val subject: String)
 
 @Serializable
-object SessionRoute
+data class SessionRoute(
+    val subject: String,
+    val questionCount: Int = 10,
+    val difficulty: String = "Mixed"
+)
 
 @Serializable
-object ResultsRoute
+data class ResultsRoute(
+    val subject: String,
+    val score: Int,
+    val total: Int,
+    val timeSeconds: Long
+)
 
 @Serializable
-object ReviewRoute
+data class ReviewRoute(
+    val sessionId: String = ""
+)
 
 @Serializable
 object ProgressRoute
