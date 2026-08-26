@@ -5,7 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.anantborad.act.core.ui.theme.ACTTheme
-import com.anantborad.act.main.presentation.ui.screens.HomeScreen
+import com.anantborad.act.main.presentation.ui.navigation.ActNavHost
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -13,7 +13,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             ACTTheme {
-                HomeScreen()
+                ActNavHost()
             }
         }
     }

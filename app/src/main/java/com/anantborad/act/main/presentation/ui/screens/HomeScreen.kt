@@ -41,7 +41,8 @@ import com.anantborad.act.main.presentation.util.MOCK_USER_STATS
 fun HomeScreen(
     onQuickStartClick: () -> Unit = {},
     onSubjectClick: (PracticeSubject) -> Unit = {},
-    onViewAllClick: () -> Unit = {}
+    onViewAllClick: () -> Unit = {},
+    onProfileClick: () -> Unit = {}
 ) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
@@ -56,7 +57,8 @@ fun HomeScreen(
             ActHeader(
                 title = MOCK_USER_STATS.name,
                 subtitle = "Welcome back",
-                avatarUrl = "https://ui-avatars.com/api/?name=${MOCK_USER_STATS.name}&background=random"
+                avatarUrl = "https://ui-avatars.com/api/?name=${MOCK_USER_STATS.name}&background=random",
+                onAvatarClick = onProfileClick
             )
 
             Spacer(modifier = Modifier.height(8.dp))

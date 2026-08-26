@@ -24,6 +24,7 @@ import com.anantborad.act.main.presentation.ui.components.ActSubjectCard
 @Composable
 fun HubScreen(
     onSubjectClick: (PracticeSubject) -> Unit = {},
+    onSkillClick: (String) -> Unit = {},
     onBackClick: () -> Unit = {}
 ) {
     Scaffold(
@@ -93,6 +94,38 @@ fun HubScreen(
                         subjectColor = color,
                         onClick = { onSubjectClick(subject) }
                     )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            Text(
+                text = "Trending Skills",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                listOf("Coordinate Geometry", "Punctuation").forEach { skill ->
+                    Surface(
+                        onClick = { onSkillClick(skill) },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(16.dp),
+                        color = Color.White,
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
+                    ) {
+                        Text(
+                            text = skill,
+                            modifier = Modifier.padding(16.dp),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                    }
                 }
             }
 

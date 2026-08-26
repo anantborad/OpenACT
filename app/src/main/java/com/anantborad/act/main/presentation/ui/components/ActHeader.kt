@@ -2,6 +2,7 @@ package com.anantborad.act.main.presentation.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -83,6 +84,7 @@ fun ActHeader(
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.surfaceVariant)
                     .border(2.dp, MaterialTheme.colorScheme.background, CircleShape)
+                    .then(if (onAvatarClick != null) Modifier.clickable(onClick = onAvatarClick) else Modifier)
             ) {
                 AsyncImage(
                     model = avatarUrl,
