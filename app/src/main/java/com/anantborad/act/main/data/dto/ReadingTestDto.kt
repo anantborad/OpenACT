@@ -43,7 +43,9 @@ data class PassageParagraphItemDto(
 data class ReadingQuestionDto(
     val number: Int,
     val prompt: String,
-    val choices: List<ReadingChoiceDto>
+    val choices: List<ReadingChoiceDto>,
+    val answer: String,
+    val explanation: String
 )
 
 @Serializable

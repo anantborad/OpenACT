@@ -59,7 +59,7 @@ fun ActNavHost() {
         ).fallbackToDestructiveMigration().build()
     }
     val repository: QuestionRepository = remember {
-        QuestionRepositoryImpl(QuestionDataSourceImpl(), database.questionDao(), context.applicationContext)
+        QuestionRepositoryImpl(QuestionDataSourceImpl(context.assets), database.questionDao(), context.applicationContext)
     }
 
     val navController = rememberNavController()

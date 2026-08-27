@@ -29,9 +29,15 @@ class QuestionRepositoryImpl(
     private var lastSessionQuestions: List<PracticeQuestion> = emptyList()
 
     private suspend fun ensureDatabasePopulated() {
-        if (!isPopulated) {
+        if (!isPopulated || isDatabaseEmpty()) {
             prepopulateDatabase()
         }
+    }
+
+    private suspend fun isDatabaseEmpty(): Boolean = withContext(Dispatchers.IO) {
+        questionDao.getMathQuestionCount() == 0 &&
+                questionDao.getEnglishTestCount() == 0 &&
+                questionDao.getReadingPassageCount() == 0
     }
 
     private suspend fun prepopulateDatabase() = withContext(Dispatchers.IO) {
@@ -178,7 +184,7 @@ class QuestionRepositoryImpl(
                                 text = q.questionText,
                                 passage = passageStr,
                                 options = q.options.map { QuestionOption(it.key, it.key, it.value) },
-                                correctOptionId = "A",
+                                correctOptionId = q.options.firstOrNull()?.key ?: "A",
                                 explanation = "Explanation for English question ${q.id}"
                             )
                         }
@@ -218,8 +224,8 @@ class QuestionRepositoryImpl(
                                 text = q.prompt,
                                 passage = passageStr,
                                 options = q.choices.map { QuestionOption(it.label, it.label, it.text) },
-                                correctOptionId = "A",
-                                explanation = "Explanation for reading question ${q.number}"
+                                correctOptionId = q.answer,
+                                explanation = q.explanation
                             )
                         }
                     }

@@ -44,10 +44,17 @@ class SessionViewModel(
             )
             try {
                 val questions = repository.getPracticeQuestions(subject, limit)
-                _uiState.value = _uiState.value.copy(
-                    questions = questions,
-                    isLoading = false
-                )
+                if (questions.isEmpty()) {
+                    _uiState.value = _uiState.value.copy(
+                        error = "No questions found for this subject. Please check your data.",
+                        isLoading = false
+                    )
+                } else {
+                    _uiState.value = _uiState.value.copy(
+                        questions = questions,
+                        isLoading = false
+                    )
+                }
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     error = e.message ?: "Failed to load questions",

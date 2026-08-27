@@ -3,6 +3,8 @@ package com.anantborad.act.main.data
 import com.anantborad.act.main.data.dto.EnglishTestDto
 import com.anantborad.act.main.data.dto.MathQuestionDto
 import com.anantborad.act.main.data.dto.ReadingItemDto
+import android.content.res.AssetManager
+import android.util.Log
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import java.io.InputStream
@@ -13,7 +15,7 @@ interface QuestionDataSource {
     fun getReadingCategories(): Map<String, Map<String, List<ReadingItemDto>>>
 }
 
-class QuestionDataSourceImpl : QuestionDataSource {
+class QuestionDataSourceImpl(private val assets: AssetManager) : QuestionDataSource {
     private val json = Json {
         ignoreUnknownKeys = true
         coerceInputValues = true
@@ -33,13 +35,13 @@ class QuestionDataSourceImpl : QuestionDataSource {
 
     @OptIn(kotlinx.serialization.ExperimentalSerializationApi::class)
     private inline fun <reified T> readJson(fileName: String): T? {
-        val resourcePath = "/com/anantborad/act/core/assets/questions/$fileName"
         return try {
-            val inputStream: InputStream? = javaClass.getResourceAsStream(resourcePath)
-            inputStream?.use {
+            val inputStream: InputStream = assets.open("questions/$fileName")
+            inputStream.use {
                 json.decodeFromStream<T>(it)
             }
         } catch (e: Exception) {
+            Log.e("QuestionDataSource", "Error reading $fileName: ${e.message}")
             e.printStackTrace()
             null
         }
