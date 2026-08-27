@@ -30,9 +30,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import androidx.compose.ui.platform.LocalContext
+import androidx.room.Room
 import com.anantborad.act.core.ui.theme.BlueprintBlue
 import com.anantborad.act.main.data.QuestionDataSourceImpl
 import com.anantborad.act.main.data.QuestionRepositoryImpl
+import com.anantborad.act.main.data.local.ActDatabase
 import com.anantborad.act.main.domain.QuestionRepository
 import com.anantborad.act.main.domain.model.PracticeSubject
 import com.anantborad.act.main.presentation.ui.screens.*
@@ -47,8 +50,16 @@ sealed class BottomNavItem(val route: Any, val icon: ImageVector, val label: Str
 
 @Composable
 fun ActNavHost() {
+    val context = LocalContext.current
+    val database = remember {
+        Room.databaseBuilder(
+            context.applicationContext,
+            ActDatabase::class.java,
+            "act_database"
+        ).fallbackToDestructiveMigration().build()
+    }
     val repository: QuestionRepository = remember {
-        QuestionRepositoryImpl(QuestionDataSourceImpl())
+        QuestionRepositoryImpl(QuestionDataSourceImpl(), database.questionDao(), context.applicationContext)
     }
 
     val navController = rememberNavController()

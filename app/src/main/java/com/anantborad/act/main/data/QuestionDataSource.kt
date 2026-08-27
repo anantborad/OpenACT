@@ -4,6 +4,7 @@ import com.anantborad.act.main.data.dto.EnglishTestDto
 import com.anantborad.act.main.data.dto.MathQuestionDto
 import com.anantborad.act.main.data.dto.ReadingItemDto
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromStream
 import java.io.InputStream
 
 interface QuestionDataSource {
@@ -30,13 +31,13 @@ class QuestionDataSourceImpl : QuestionDataSource {
         return readJson<Map<String, Map<String, List<ReadingItemDto>>>>("reading.json") ?: emptyMap()
     }
 
+    @OptIn(kotlinx.serialization.ExperimentalSerializationApi::class)
     private inline fun <reified T> readJson(fileName: String): T? {
         val resourcePath = "/com/anantborad/act/core/assets/questions/$fileName"
         return try {
             val inputStream: InputStream? = javaClass.getResourceAsStream(resourcePath)
             inputStream?.use {
-                val jsonString = it.bufferedReader().readText()
-                json.decodeFromString<T>(jsonString)
+                json.decodeFromStream<T>(it)
             }
         } catch (e: Exception) {
             e.printStackTrace()
