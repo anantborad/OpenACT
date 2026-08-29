@@ -134,7 +134,7 @@ fun ActChoiceChip(
     ) {
         Row(
             modifier = Modifier
-                .padding(vertical = 10.dp, horizontal = 16.dp),
+                .padding(vertical = 12.dp, horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
@@ -143,7 +143,8 @@ fun ActChoiceChip(
                     .clip(RoundedCornerShape(8.dp))
                     .background(
                         if (isSelected) BlueprintBlue else MaterialTheme.colorScheme.surfaceVariant
-                    ),
+                    )
+                    .align(Alignment.CenterVertically),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -158,7 +159,7 @@ fun ActChoiceChip(
                     latex = text,
                     modifier = Modifier
                         .weight(1f)
-                        .align(Alignment.CenterVertically),
+                        .padding(vertical = 4.dp),
                     textColor = MaterialTheme.colorScheme.onSurface
                 )
             } else {
@@ -168,8 +169,7 @@ fun ActChoiceChip(
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier
                         .weight(1f)
-                        .padding(vertical = 2.dp)
-                        .align(Alignment.CenterVertically)
+                        .padding(vertical = 4.dp)
                 )
             }
         }

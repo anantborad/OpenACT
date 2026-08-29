@@ -103,32 +103,46 @@ fun SessionScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .padding(horizontal = 24.dp)
-                    .verticalScroll(rememberScrollState())
             ) {
-                Spacer(modifier = Modifier.height(24.dp))
-
-                if (question.passage != null) {
-                    ActPassageCard(
-                        passage = question.passage,
-                        useMath = question.subject == PracticeSubject.MATH
-                    )
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
+                        .verticalScroll(rememberScrollState())
+                ) {
                     Spacer(modifier = Modifier.height(24.dp))
+
+                    if (question.passage != null) {
+                        ActPassageCard(
+                            passage = question.passage,
+                            useMath = question.subject == PracticeSubject.MATH
+                        )
+                        Spacer(modifier = Modifier.height(24.dp))
+                    }
+
+                    if (question.subject == PracticeSubject.MATH) {
+                        ActMathText(
+                            latex = question.text,
+                        )
+                    } else {
+                        Text(
+                            text = question.text,
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(32.dp))
                 }
 
-                if (question.subject == PracticeSubject.MATH) {
-                    ActMathText(latex = question.text)
-                } else {
-                    Text(
-                        text = question.text,
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(32.dp))
-
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
+                        .padding(bottom = 24.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
                     question.options.forEach { option ->
                         ActChoiceChip(
                             text = option.text,
@@ -139,8 +153,6 @@ fun SessionScreen(
                         )
                     }
                 }
-
-                Spacer(modifier = Modifier.height(32.dp))
             }
         }
     }

@@ -99,7 +99,9 @@ fun ReviewScreen(
                 }
 
                 if (question.subject == PracticeSubject.MATH) {
-                    ActMathText(latex = question.text)
+                    ActMathText(
+                        latex = question.text,
+                    )
                 } else {
                     Text(
                         text = question.text,
