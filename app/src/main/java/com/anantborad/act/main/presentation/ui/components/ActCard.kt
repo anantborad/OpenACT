@@ -146,7 +146,8 @@ fun ActSubjectCard(
 @Composable
 fun ActPassageCard(
     passage: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    useMath: Boolean = false
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
@@ -167,14 +168,22 @@ fun ActPassageCard(
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 12.dp)
             )
-            Text(
-                text = passage,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontFamily = LoraFontFamily,
-                    lineHeight = 24.sp
-                ),
-                color = MaterialTheme.colorScheme.onSurface
-            )
+            if (useMath) {
+                ActMathText(
+                    latex = passage,
+                    fontSize = 14,
+                    textColor = MaterialTheme.colorScheme.onSurface
+                )
+            } else {
+                Text(
+                    text = passage,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontFamily = LoraFontFamily,
+                        lineHeight = 24.sp
+                    ),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
         }
     }
 }

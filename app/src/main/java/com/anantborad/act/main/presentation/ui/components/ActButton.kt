@@ -119,7 +119,8 @@ fun ActChoiceChip(
     label: String,
     isSelected: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    useMath: Boolean = false
 ) {
     Surface(
         onClick = onClick,
@@ -133,7 +134,7 @@ fun ActChoiceChip(
     ) {
         Row(
             modifier = Modifier
-                .padding(16.dp),
+                .padding(vertical = 12.dp, horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
@@ -142,7 +143,8 @@ fun ActChoiceChip(
                     .clip(RoundedCornerShape(8.dp))
                     .background(
                         if (isSelected) BlueprintBlue else MaterialTheme.colorScheme.surfaceVariant
-                    ),
+                    )
+                    .align(Alignment.CenterVertically),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -152,11 +154,20 @@ fun ActChoiceChip(
                 )
             }
             Spacer(modifier = Modifier.width(16.dp))
-            Text(
-                text = text,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+            if (useMath) {
+                ActMathText(
+                    latex = text,
+                    modifier = Modifier.weight(1f),
+                    textColor = MaterialTheme.colorScheme.onSurface
+                )
+            } else {
+                Text(
+                    text = text,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f)
+                )
+            }
         }
     }
 }

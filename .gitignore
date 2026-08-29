@@ -7,9 +7,14 @@
 /.idea/workspace.xml
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
+/.idea/planningMode.xml
 .DS_Store
 /build
 /captures
 .externalNativeBuild
 .cxx
 local.properties
+/.idea/deviceManager.xml
+/.artifacts/e5ec0363-2b9f-4777-9ade-8373313d1a5f/implementation_plan.artifact.md
+/.idea/planningMode.xml
+/.idea/inspectionProfiles/Project_Default.xml

@@ -109,7 +109,10 @@ fun SessionScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 if (question.passage != null) {
-                    ActPassageCard(passage = question.passage)
+                    ActPassageCard(
+                        passage = question.passage,
+                        useMath = question.subject == PracticeSubject.MATH
+                    )
                     Spacer(modifier = Modifier.height(24.dp))
                 }
 
@@ -131,6 +134,7 @@ fun SessionScreen(
                             text = option.text,
                             label = option.label,
                             isSelected = uiState.selectedOptionId == option.id,
+                            useMath = question.subject == PracticeSubject.MATH,
                             onClick = { viewModel.onOptionSelected(option.id) }
                         )
                     }

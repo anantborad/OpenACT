@@ -91,7 +91,10 @@ fun ReviewScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 if (question.passage != null) {
-                    ActPassageCard(passage = question.passage)
+                    ActPassageCard(
+                        passage = question.passage,
+                        useMath = question.subject == PracticeSubject.MATH
+                    )
                     Spacer(modifier = Modifier.height(24.dp))
                 }
 
@@ -117,6 +120,7 @@ fun ReviewScreen(
                             label = option.label,
                             isSelected = isCorrect,
                             onClick = {},
+                            useMath = question.subject == PracticeSubject.MATH,
                             modifier = Modifier.graphicsLayer(alpha = if (isCorrect) 1f else 0.6f)
                         )
                     }
@@ -150,11 +154,18 @@ fun ReviewScreen(
                             )
                         }
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = question.explanation,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
+                        if (question.subject == PracticeSubject.MATH) {
+                            ActMathText(
+                                latex = question.explanation,
+                                fontSize = 14
+                            )
+                        } else {
+                            Text(
+                                text = question.explanation,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
                     }
                 }
             } else {
