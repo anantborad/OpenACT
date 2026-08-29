@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.anantborad.act.core.ui.theme.MathBlue
 import com.anantborad.act.main.domain.model.PracticeSubject
 import com.anantborad.act.main.presentation.ui.components.*
@@ -109,10 +110,9 @@ fun SessionScreen(
                         .weight(1f)
                         .fillMaxWidth()
                         .padding(horizontal = 24.dp)
-                        .verticalScroll(rememberScrollState())
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.Center
                 ) {
-                    Spacer(modifier = Modifier.height(24.dp))
-
                     if (question.passage != null) {
                         ActPassageCard(
                             passage = question.passage,
@@ -124,24 +124,28 @@ fun SessionScreen(
                     if (question.subject == PracticeSubject.MATH) {
                         ActMathText(
                             latex = question.text,
+                            fontSize = 20,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp)
                         )
                     } else {
                         Text(
                             text = question.text,
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Medium
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Medium,
+                            lineHeight = 32.sp,
+                            modifier = Modifier.padding(vertical = 8.dp)
                         )
                     }
-
-                    Spacer(modifier = Modifier.height(32.dp))
                 }
 
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 24.dp)
-                        .padding(bottom = 24.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                        .padding(bottom = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     question.options.forEach { option ->
                         ActChoiceChip(

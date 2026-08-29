@@ -25,8 +25,8 @@ fun ActMathText(
     textColor: Color = MaterialTheme.colorScheme.onSurface,
     fontSize: Int = 16
 ) {
-    // Start with a minimum height to avoid initial jump
-    var webViewHeight by remember { mutableStateOf(48.dp) }
+    // Start with a larger minimum height to avoid initial jump
+    var webViewHeight by remember { mutableStateOf(60.dp) }
     
     val textColorHtml = remember(textColor) {
         String.format("#%06X", (0xFFFFFF and textColor.toArgb()))
@@ -55,7 +55,8 @@ fun ActMathText(
             WebView(context).apply {
                 webViewClient = object : WebViewClient() {
                     override fun onPageFinished(view: WebView?, url: String?) {
-                        view?.loadUrl("javascript:MathInterface.onHeightChanged(document.documentElement.scrollHeight);")
+                        // Trigger height calculation
+                        view?.loadUrl("javascript:updateHeight();")
                     }
                 }
                 settings.javaScriptEnabled = true
@@ -71,8 +72,8 @@ fun ActMathText(
                     @JavascriptInterface
                     fun onHeightChanged(height: Float) {
                         val density = context.resources.displayMetrics.density
-                        // Increased buffer to 8dp to prevent clipping of radicals/tall symbols
-                        val heightDp = (height / density).dp + 8.dp
+                        // Increase buffer to 64dp to ensure no clipping for complex fractions/radicals
+                        val heightDp = (height / density).dp + 64.dp
                         post {
                             if (Math.abs(webViewHeight.value - heightDp.value) > 1f) {
                                 webViewHeight = heightDp
@@ -106,8 +107,13 @@ fun ActMathText(
                                 font-size: ${fontSize}px;
                                 color: $textColorHtml;
                                 font-family: 'Inter', -apple-system, sans-serif;
-                                line-height: 1.5;
+                                line-height: 1.6;
                                 overflow: visible;
+                            }
+                            #wrapper {
+                                padding: 20px 0;
+                                overflow: visible;
+                                display: block;
                             }
                             #math-container { 
                                 width: 100%;
@@ -115,24 +121,36 @@ fun ActMathText(
                                 overflow-wrap: break-word;
                                 overflow: visible;
                             }
-                            .katex { 
-                                font-size: 1.1em !important; 
-                                vertical-align: middle;
-                                white-space: nowrap;
-                            }
+                            /* Ensure KaTeX expressions don't break internally and stay on their own line if display mode */
                             .katex-display {
-                                margin: 0.8em 0;
+                                margin: 0.5em 0;
+                                padding: 12px 0;
                                 overflow-x: auto;
                                 overflow-y: hidden;
-                                padding: 4px 0;
+                            }
+                            .katex { 
+                                font-size: 1.1em !important; 
+                                white-space: normal;
                             }
                         </style>
                     </head>
                     <body>
-                        <div id="math-container"></div>
+                        <div id="wrapper">
+                            <div id="math-container"></div>
+                        </div>
                         <script>
+                            const updateHeight = () => {
+                                const wrapper = document.getElementById("wrapper");
+                                if (wrapper) {
+                                    // Use getBoundingClientRect for more precision
+                                    const rect = wrapper.getBoundingClientRect();
+                                    MathInterface.onHeightChanged(rect.height);
+                                }
+                            };
+
                             (function() {
                                 const container = document.getElementById("math-container");
+                                const wrapper = document.getElementById("wrapper");
                                 container.textContent = "$escapedLatex";
                                 
                                 renderMathInElement(container, {
@@ -145,14 +163,23 @@ fun ActMathText(
                                     throwOnError: false
                                 });
                                 
-                                const updateHeight = () => {
-                                    MathInterface.onHeightChanged(document.documentElement.scrollHeight);
-                                };
-                                
                                 updateHeight();
-                                setTimeout(updateHeight, 50);
-                                setTimeout(updateHeight, 200);
+                                
+                                // ResizeObserver to catch any content changes
+                                if (window.ResizeObserver) {
+                                    const ro = new ResizeObserver(updateHeight);
+                                    ro.observe(wrapper);
+                                }
+                                
+                                // Wait for fonts to be ready
+                                if (document.fonts && document.fonts.ready) {
+                                    document.fonts.ready.then(updateHeight);
+                                }
+                                
+                                // Fallback timeouts
+                                setTimeout(updateHeight, 100);
                                 setTimeout(updateHeight, 500);
+                                setTimeout(updateHeight, 1000);
                             })();
                         </script>
                     </body>
@@ -163,7 +190,7 @@ fun ActMathText(
         },
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = 32.dp)
+            .heightIn(min = 60.dp)
             .height(webViewHeight)
     )
 }
