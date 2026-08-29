@@ -25,14 +25,12 @@ fun ActMathText(
     textColor: Color = MaterialTheme.colorScheme.onSurface,
     fontSize: Int = 16
 ) {
-    // Start with a minimum height to avoid initial jump
-    var webViewHeight by remember { mutableStateOf(48.dp) }
+    var webViewHeight by remember { mutableStateOf(32.dp) }
     
     val textColorHtml = remember(textColor) {
         String.format("#%06X", (0xFFFFFF and textColor.toArgb()))
     }
     
-    // Normalize LaTeX: handle both single and double escaped delimiters from JSON data
     val normalizedLatex = remember(latex) {
         latex.replace("\\\\(", "\\(")
              .replace("\\\\)", "\\)")
@@ -40,7 +38,6 @@ fun ActMathText(
              .replace("\\\\]", "\\]")
     }
     
-    // Escape for JavaScript string literal
     val escapedLatex = remember(normalizedLatex) {
         normalizedLatex
             .replace("\\", "\\\\")
@@ -55,7 +52,7 @@ fun ActMathText(
             WebView(context).apply {
                 webViewClient = object : WebViewClient() {
                     override fun onPageFinished(view: WebView?, url: String?) {
-                        view?.loadUrl("javascript:MathInterface.onHeightChanged(document.documentElement.scrollHeight);")
+                        view?.loadUrl("javascript:MathInterface.reportHeight();")
                     }
                 }
                 settings.javaScriptEnabled = true
@@ -63,7 +60,6 @@ fun ActMathText(
                 isVerticalScrollBarEnabled = false
                 isHorizontalScrollBarEnabled = false
                 
-                // Prevent interaction to behave like a standard Text label
                 setOnLongClickListener { true }
                 isLongClickable = false
 
@@ -71,8 +67,8 @@ fun ActMathText(
                     @JavascriptInterface
                     fun onHeightChanged(height: Float) {
                         val density = context.resources.displayMetrics.density
-                        // Increased buffer to 8dp to prevent clipping of radicals/tall symbols
-                        val heightDp = (height / density).dp + 8.dp
+                        // 6dp buffer is enough if internal padding is low
+                        val heightDp = (height / density).dp + 6.dp
                         post {
                             if (Math.abs(webViewHeight.value - heightDp.value) > 1f) {
                                 webViewHeight = heightDp
@@ -100,20 +96,23 @@ fun ActMathText(
                                 user-select: none;
                                 box-sizing: border-box;
                             }
+                            html, body {
+                                margin: 0;
+                                padding: 0;
+                                background: transparent;
+                            }
                             body { 
-                                margin: 0; 
-                                padding: 12px 0; 
+                                padding: 2px 0; 
                                 font-size: ${fontSize}px;
                                 color: $textColorHtml;
                                 font-family: 'Inter', -apple-system, sans-serif;
-                                line-height: 1.8;
-                                overflow: visible;
+                                line-height: 1.5;
+                                white-space: normal;
+                                word-wrap: break-word;
                             }
                             #math-container { 
                                 width: 100%;
-                                word-wrap: break-word;
-                                overflow-wrap: break-word;
-                                overflow: visible;
+                                display: block;
                             }
                             .katex { 
                                 font-size: 1.1em !important; 
@@ -121,10 +120,9 @@ fun ActMathText(
                                 white-space: nowrap;
                             }
                             .katex-display {
-                                margin: 0.8em 0;
+                                margin: 0.3em 0;
                                 overflow-x: auto;
                                 overflow-y: hidden;
-                                padding: 4px 0;
                             }
                         </style>
                     </head>
@@ -145,14 +143,19 @@ fun ActMathText(
                                     throwOnError: false
                                 });
                                 
-                                const updateHeight = () => {
-                                    MathInterface.onHeightChanged(document.documentElement.scrollHeight);
+                                window.MathInterface.reportHeight = function() {
+                                    const height = document.body.getBoundingClientRect().height;
+                                    MathInterface.onHeightChanged(height);
                                 };
                                 
-                                updateHeight();
-                                setTimeout(updateHeight, 50);
-                                setTimeout(updateHeight, 200);
-                                setTimeout(updateHeight, 500);
+                                const ro = new ResizeObserver(() => {
+                                    window.MathInterface.reportHeight();
+                                });
+                                ro.observe(container);
+                                
+                                window.MathInterface.reportHeight();
+                                setTimeout(window.MathInterface.reportHeight, 100);
+                                setTimeout(window.MathInterface.reportHeight, 400);
                             })();
                         </script>
                     </body>
@@ -163,7 +166,7 @@ fun ActMathText(
         },
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = 32.dp)
+            .heightIn(min = 20.dp)
             .height(webViewHeight)
     )
 }
