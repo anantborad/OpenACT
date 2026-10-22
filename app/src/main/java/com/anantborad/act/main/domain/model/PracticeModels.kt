@@ -1,7 +1,7 @@
 package com.anantborad.act.main.domain.model
 
 enum class PracticeSubject {
-    ENGLISH, MATH, READING, SCIENCE;
+    ENGLISH, MATH, READING;
 
     val displayName: String
         get() = name.lowercase().replaceFirstChar { it.uppercase() }

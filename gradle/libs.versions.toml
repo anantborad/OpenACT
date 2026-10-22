@@ -1,5 +1,5 @@
 [versions]
-agp = "9.3.2"
+agp = "9.3.3"
 coilCompose = "3.5.0"
 kotlin = "2.4.10"
 coreKtx = "1.19.0"
@@ -13,7 +13,7 @@ navigationCompose = "2.9.8"
 kotlinxSerialization = "1.11.0"
 coil = "3.5.0"
 room = "2.8.4"
-ksp = "2.2.10-2.0.2"
+ksp = "2.3.6"
 
 [libraries]
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }

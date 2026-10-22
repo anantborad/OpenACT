@@ -24,9 +24,6 @@ val MathBlueBg = Color(0xFFeff6ff) // blue-50
 val ReadingEmerald = Color(0xFF059669) // emerald-600
 val ReadingEmeraldBg = Color(0xFFecfdf5) // emerald-50
 
-val SciencePurple = Color(0xFF9333ea) // purple-600
-val SciencePurpleBg = Color(0xFFfaf5ff) // purple-50
-
 // Material 3 defaults (fallback/secondary)
 val Purple80 = Color(0xFFD0BCFF)
 val PurpleGrey80 = Color(0xFFCCC2DC)

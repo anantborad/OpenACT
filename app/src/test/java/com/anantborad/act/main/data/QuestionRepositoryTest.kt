@@ -1,5 +1,6 @@
 package com.anantborad.act.main.data
 
+import android.content.SharedPreferences
 import com.anantborad.act.main.data.dto.*
 import com.anantborad.act.main.data.local.EnglishTestEntity
 import com.anantborad.act.main.data.local.MathQuestionEntity
@@ -14,19 +15,80 @@ import org.junit.Test
 class QuestionRepositoryTest {
 
     private lateinit var repository: QuestionRepositoryImpl
+
+    private val fakeContext = object : android.content.ContextWrapper(null) {
+        private val prefs = mutableMapOf<String, Any>()
+        override fun getSharedPreferences(name: String, mode: Int): SharedPreferences {
+            return object : SharedPreferences {
+                override fun edit(): SharedPreferences.Editor {
+                    return object : SharedPreferences.Editor {
+                        override fun putString(key: String, value: String?): SharedPreferences.Editor {
+                            value?.let { prefs[key] = it }
+                            return this
+                        }
+                        override fun putStringSet(key: String, values: MutableSet<String>?): SharedPreferences.Editor {
+                            values?.let { prefs[key] = it }
+                            return this
+                        }
+                        override fun putInt(key: String, value: Int): SharedPreferences.Editor {
+                            prefs[key] = value
+                            return this
+                        }
+                        override fun putLong(key: String, value: Long): SharedPreferences.Editor {
+                            prefs[key] = value
+                            return this
+                        }
+                        override fun putFloat(key: String, value: Float): SharedPreferences.Editor {
+                            prefs[key] = value
+                            return this
+                        }
+                        override fun putBoolean(key: String, value: Boolean): SharedPreferences.Editor {
+                            prefs[key] = value
+                            return this
+                        }
+                        override fun remove(key: String): SharedPreferences.Editor {
+                            prefs.remove(key)
+                            return this
+                        }
+                        override fun clear(): SharedPreferences.Editor {
+                            prefs.clear()
+                            return this
+                        }
+                        override fun commit(): Boolean = true
+                        override fun apply() {}
+                    }
+                }
+                override fun getAll(): MutableMap<String, *> = prefs
+                override fun getString(key: String, defValue: String?): String? = prefs[key] as? String ?: defValue
+                @Suppress("UNCHECKED_CAST")
+                override fun getStringSet(key: String, defValue: MutableSet<String>?): MutableSet<String>? = prefs[key] as? MutableSet<String> ?: defValue
+                override fun getInt(key: String, defValue: Int): Int = prefs[key] as? Int ?: defValue
+                override fun getLong(key: String, defValue: Long): Long = prefs[key] as? Long ?: defValue
+                override fun getFloat(key: String, defValue: Float): Float = prefs[key] as? Float ?: defValue
+                override fun getBoolean(key: String, defValue: Boolean): Boolean = prefs[key] as? Boolean ?: defValue
+                override fun contains(key: String): Boolean = prefs.containsKey(key)
+                override fun registerOnSharedPreferenceChangeListener(listener: SharedPreferences.OnSharedPreferenceChangeListener?) {}
+                override fun unregisterOnSharedPreferenceChangeListener(listener: SharedPreferences.OnSharedPreferenceChangeListener?) {}
+            }
+        }
+    }
     
     private val fakeDataSource = object : QuestionDataSource {
         override fun getEnglishTests(): List<EnglishTestDto> = listOf(
-            EnglishTestDto("1", "Title", emptyList(), emptyList())
+            EnglishTestDto("1", "Title", emptyList(), emptyList()),
         )
         override fun getMathCategories(): Map<String, Map<String, List<MathQuestionDto>>> = mapOf(
             "Algebra" to mapOf("Easy" to listOf(MathQuestionDto("Prompt", emptyList(), "A", "Expl")))
         )
         override fun getReadingCategories(): Map<String, Map<String, List<ReadingItemDto>>> = mapOf(
-            "Science" to mapOf("Medium" to listOf(ReadingItemDto(
-                ReadingMetadataDto("", ""),
-                PassageDataDto(1, "Science", "Medium", "Cat", emptyList(), emptyList())
-            )))
+            "Natural Science" to mapOf(
+                "Medium" to listOf(
+                    ReadingItemDto(
+                        ReadingMetadataDto("", ""),
+                        PassageDataDto(1, "Natural Science", "Medium", "Cat", emptyList(), emptyList())
+                    )
+                )
+            )
         )
     }
     
@@ -40,8 +102,8 @@ class QuestionRepositoryTest {
         override suspend fun getEnglishTestCount(): Int = englishTests.size
         override suspend fun insertMathQuestions(questions: List<MathQuestionEntity>) { mathQuestions.addAll(questions) }
         override suspend fun getMathQuestions(category: String, difficulty: String): List<MathQuestionEntity> = 
-            mathQuestions.filter { it.category == category && it.difficulty == difficulty }
-        override suspend fun getMathCategories(): List<String> = mathQuestions.map { it.category }.distinct()
+            mathQuestions.filter { (it.category == category) && (it.difficulty == difficulty) }
+        override suspend fun getMathCategories(): List<String> = mathQuestions.asSequence().map { it.category }.distinct().toList()
         override suspend fun getMathDifficulties(category: String): List<String> = 
             mathQuestions.filter { it.category == category }.map { it.difficulty }.distinct()
         override suspend fun getAllMathQuestions(): List<MathQuestionEntity> = mathQuestions
@@ -52,11 +114,17 @@ class QuestionRepositoryTest {
         override suspend fun getRandomEnglishTests(limit: Int): List<EnglishTestEntity> = englishTests.take(limit)
         override suspend fun getRandomMathQuestions(limit: Int): List<MathQuestionEntity> = mathQuestions.take(limit)
         override suspend fun getRandomReadingPassages(limit: Int): List<ReadingPassageEntity> = readingPassages.take(limit)
+        override suspend fun getMathIds(): List<Long> = mathQuestions.map { it.id }
+        override suspend fun getMathQuestionsByIds(ids: List<Long>): List<MathQuestionEntity> = mathQuestions.filter { it.id in ids }
+        override suspend fun getEnglishTestIds(): List<String> = englishTests.map { it.testId }
+        override suspend fun getEnglishTestsByIds(ids: List<String>): List<EnglishTestEntity> = englishTests.filter { it.testId in ids }
+        override suspend fun getReadingPassageIds(): List<Int> = readingPassages.map { it.id }
+        override suspend fun getReadingPassagesByIds(ids: List<Int>): List<ReadingPassageEntity> = readingPassages.filter { it.id in ids }
     }
 
     @Before
     fun setUp() {
-        repository = QuestionRepositoryImpl(fakeDataSource, fakeDao)
+        repository = QuestionRepositoryImpl(fakeDataSource, fakeDao, fakeContext)
     }
 
     @Test

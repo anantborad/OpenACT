@@ -12,7 +12,6 @@ import androidx.compose.ui.unit.dp
 import com.anantborad.act.core.ui.theme.EnglishRose
 import com.anantborad.act.core.ui.theme.MathBlue
 import com.anantborad.act.core.ui.theme.ReadingEmerald
-import com.anantborad.act.core.ui.theme.SciencePurple
 import com.anantborad.act.main.domain.model.PracticeSubject
 import com.anantborad.act.main.presentation.ui.components.ActButton
 import com.anantborad.act.main.presentation.ui.components.ActHeader
@@ -32,7 +31,6 @@ fun SetupScreen(
         PracticeSubject.ENGLISH -> EnglishRose
         PracticeSubject.MATH -> MathBlue
         PracticeSubject.READING -> ReadingEmerald
-        PracticeSubject.SCIENCE -> SciencePurple
     }
 
     Scaffold(

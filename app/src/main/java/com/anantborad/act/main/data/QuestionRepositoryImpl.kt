@@ -230,7 +230,6 @@ class QuestionRepositoryImpl(
                         }
                     }
                 }
-                PracticeSubject.SCIENCE -> emptyList()
             }
         }
         Log.d("ACT_PERF", "getPracticeQuestions ($subject) took ${time}ms")

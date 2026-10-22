@@ -39,19 +39,11 @@ private val LightColorScheme = lightColorScheme(
 
 @Composable
 fun ACTTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
+    darkTheme: Boolean = false, // Force light mockup theme for consistent UI display
     dynamicColor: Boolean = false, // Disabled for exact mockup look
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
+    val colorScheme = LightColorScheme
 
     MaterialTheme(
         colorScheme = colorScheme,

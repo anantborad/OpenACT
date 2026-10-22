@@ -87,7 +87,6 @@ fun HubScreen(
                         PracticeSubject.ENGLISH -> EnglishRose to 82
                         PracticeSubject.MATH -> MathBlue to 71
                         PracticeSubject.READING -> ReadingEmerald to 85
-                        PracticeSubject.SCIENCE -> SciencePurple to 0
                     }
 
                     ActSubjectCard(

@@ -153,7 +153,6 @@ fun HomeScreen(
                             "Math" -> PracticeSubject.MATH to MathBlue
                             else -> PracticeSubject.READING to ReadingEmerald
                         }
-
                         ActSubjectCard(
                             subjectName = subjectStat.name,
                             accuracy = subjectStat.accuracy,
