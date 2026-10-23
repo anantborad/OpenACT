@@ -232,7 +232,13 @@ fun ActNavHost() {
             }
             composable<ReviewRoute> { backStackEntry ->
                 val route: ReviewRoute = backStackEntry.toRoute()
-                val viewModel: ReviewViewModel = viewModel()
+                val viewModel: ReviewViewModel = viewModel(
+                    factory = object : ViewModelProvider.Factory {
+                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                            return ReviewViewModel(repository) as T
+                        }
+                    }
+                )
                 ReviewScreen(
                     viewModel = viewModel,
                     onBackClick = { navController.popBackStack() }

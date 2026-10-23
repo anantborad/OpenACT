@@ -88,6 +88,7 @@ class SessionViewModel(
                 newAnswers[q.id] == q.correctOptionId
             }
             val endTime = System.currentTimeMillis() / 1000
+            repository.saveLastSessionAnswers(newAnswers)
             _uiState.value = currentState.copy(
                 isFinished = true,
                 answers = newAnswers,

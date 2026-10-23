@@ -1,11 +1,14 @@
 package com.anantborad.act.main.presentation.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -13,13 +16,16 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.anantborad.act.core.ui.theme.EnglishRose
+import com.anantborad.act.core.ui.theme.EnglishRoseBg
 import com.anantborad.act.core.ui.theme.MathBlue
+import com.anantborad.act.core.ui.theme.ReadingEmerald
+import com.anantborad.act.core.ui.theme.ReadingEmeraldBg
 import com.anantborad.act.main.domain.model.PracticeSubject
-import com.anantborad.act.main.presentation.ui.components.ActChoiceChip
 import com.anantborad.act.main.presentation.ui.components.ActMathText
 import com.anantborad.act.main.presentation.ui.components.ActPassageCard
 import com.anantborad.act.main.presentation.viewmodels.ReviewViewModel
@@ -32,6 +38,8 @@ fun ReviewScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val question = uiState.currentQuestion
+    val userAnswer = uiState.userAnswer
+    val isCorrect = uiState.isCorrect
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -90,6 +98,37 @@ fun ReviewScreen(
             if (question != null) {
                 Spacer(modifier = Modifier.height(16.dp))
 
+                // Correct / Incorrect Status Badge
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = if (isCorrect) ReadingEmeraldBg else EnglishRoseBg,
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp,
+                        if (isCorrect) ReadingEmerald.copy(alpha = 0.3f) else EnglishRose.copy(alpha = 0.3f)
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = if (isCorrect) Icons.Default.Check else Icons.Default.Close,
+                            contentDescription = null,
+                            tint = if (isCorrect) ReadingEmerald else EnglishRose,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = if (isCorrect) "Correct" else "Incorrect (Your answer: ${userAnswer ?: "None"})",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isCorrect) ReadingEmerald else EnglishRose
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
                 if (question.passage != null) {
                     ActPassageCard(
                         passage = question.passage,
@@ -114,17 +153,90 @@ fun ReviewScreen(
 
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     question.options.forEach { option ->
-                        val isCorrect = option.id == question.correctOptionId
-                        // We don't have the user's specific choice saved in the review state yet for simplicity,
-                        // but we can at least show the correct one.
-                        ActChoiceChip(
-                            text = option.text,
-                            label = option.label,
-                            isSelected = isCorrect,
-                            onClick = {},
-                            useMath = question.subject == PracticeSubject.MATH,
-                            modifier = Modifier.graphicsLayer(alpha = if (isCorrect) 1f else 0.6f)
-                        )
+                        val isCorrectOption = option.id == question.correctOptionId
+                        val isUserSelection = option.id == userAnswer
+
+                        val containerColor = when {
+                            isCorrectOption -> ReadingEmeraldBg
+                            isUserSelection -> EnglishRoseBg
+                            else -> Color.White
+                        }
+                        val borderColor = when {
+                            isCorrectOption -> ReadingEmerald
+                            isUserSelection -> EnglishRose
+                            else -> MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+                        }
+                        val labelBgColor = when {
+                            isCorrectOption -> ReadingEmerald
+                            isUserSelection -> EnglishRose
+                            else -> MaterialTheme.colorScheme.surfaceVariant
+                        }
+                        val labelTextColor = when {
+                            isCorrectOption || isUserSelection -> Color.White
+                            else -> MaterialTheme.colorScheme.onSurfaceVariant
+                        }
+
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            color = containerColor,
+                            border = androidx.compose.foundation.BorderStroke(1.dp, borderColor)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .padding(vertical = 12.dp, horizontal = 16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(labelBgColor),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    if (isCorrectOption) {
+                                        Icon(
+                                            Icons.Default.Check,
+                                            contentDescription = "Correct",
+                                            tint = Color.White,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    } else if (isUserSelection) {
+                                        Icon(
+                                            Icons.Default.Close,
+                                            contentDescription = "Incorrect",
+                                            tint = Color.White,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    } else {
+                                        Text(
+                                            text = option.label,
+                                            style = MaterialTheme.typography.labelLarge,
+                                            color = labelTextColor
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.width(16.dp))
+                                if (question.subject == PracticeSubject.MATH) {
+                                    ActMathText(
+                                        latex = option.text,
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .padding(vertical = 2.dp),
+                                        textColor = MaterialTheme.colorScheme.onSurface
+                                    )
+                                } else {
+                                    Text(
+                                        text = option.text,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .padding(vertical = 2.dp)
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
 

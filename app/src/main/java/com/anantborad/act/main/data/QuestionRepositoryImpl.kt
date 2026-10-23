@@ -27,6 +27,7 @@ class QuestionRepositoryImpl(
         set(value) = sharedPrefs.edit().putBoolean("db_populated", value).apply()
 
     private var lastSessionQuestions: List<PracticeQuestion> = emptyList()
+    private var lastSessionAnswers: Map<String, String> = emptyMap()
 
     private suspend fun ensureDatabasePopulated() {
         if (!isPopulated || isDatabaseEmpty()) {
@@ -157,6 +158,12 @@ class QuestionRepositoryImpl(
     }
 
     override fun getLastSessionQuestions(): List<PracticeQuestion> = lastSessionQuestions
+
+    override fun saveLastSessionAnswers(answers: Map<String, String>) {
+        lastSessionAnswers = answers
+    }
+
+    override fun getLastSessionAnswers(): Map<String, String> = lastSessionAnswers
 
     override suspend fun getPracticeQuestions(
         subject: PracticeSubject,

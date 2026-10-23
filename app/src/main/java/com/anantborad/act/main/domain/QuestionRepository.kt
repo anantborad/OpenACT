@@ -14,4 +14,6 @@ interface QuestionRepository {
     suspend fun getUserStats(): UserStats
     suspend fun getPracticeQuestions(subject: PracticeSubject, limit: Int = 10): List<PracticeQuestion>
     fun getLastSessionQuestions(): List<PracticeQuestion>
+    fun saveLastSessionAnswers(answers: Map<String, String>)
+    fun getLastSessionAnswers(): Map<String, String>
 }

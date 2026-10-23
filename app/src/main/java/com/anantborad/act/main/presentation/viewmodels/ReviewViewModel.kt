@@ -9,10 +9,17 @@ import kotlinx.coroutines.flow.asStateFlow
 
 data class ReviewState(
     val questions: List<PracticeQuestion> = emptyList(),
+    val answers: Map<String, String> = emptyMap(),
     val currentQuestionIndex: Int = 0
 ) {
     val currentQuestion: PracticeQuestion?
         get() = questions.getOrNull(currentQuestionIndex)
+
+    val userAnswer: String?
+        get() = currentQuestion?.let { answers[it.id] }
+
+    val isCorrect: Boolean
+        get() = currentQuestion?.let { userAnswer == it.correctOptionId } ?: false
 }
 
 class ReviewViewModel(
@@ -28,7 +35,11 @@ class ReviewViewModel(
 
     private fun loadLastSession() {
         val questions = repository.getLastSessionQuestions()
-        _uiState.value = _uiState.value.copy(questions = questions)
+        val answers = repository.getLastSessionAnswers()
+        _uiState.value = _uiState.value.copy(
+            questions = questions,
+            answers = answers
+        )
     }
 
     fun nextQuestion() {
