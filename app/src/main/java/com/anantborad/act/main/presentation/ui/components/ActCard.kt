@@ -24,7 +24,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.anantborad.act.core.ui.theme.BlueprintBlue
@@ -44,9 +43,9 @@ fun ActStatCard(
         color = Color.White,
         border = androidx.compose.foundation.BorderStroke(
             1.dp,
-            MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)
+            MaterialTheme.colorScheme.outline.copy(alpha = 0.12f)
         ),
-        shadowElevation = 2.dp
+        shadowElevation = 1.dp
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
@@ -54,26 +53,23 @@ fun ActStatCard(
         ) {
             Box(
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(44.dp)
                     .clip(CircleShape)
                     .background(iconBgColor),
                 contentAlignment = Alignment.Center
             ) {
                 icon()
             }
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(14.dp))
             Column {
                 Text(
                     text = value,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
+                    style = MaterialTheme.typography.titleLarge
                 )
                 Text(
                     text = label.uppercase(),
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.sp
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -91,11 +87,11 @@ fun ActSubjectCard(
     Surface(
         onClick = onClick,
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(16.dp),
         color = Color.White,
         border = androidx.compose.foundation.BorderStroke(
             1.dp,
-            MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)
+            MaterialTheme.colorScheme.outline.copy(alpha = 0.12f)
         ),
         shadowElevation = 1.dp
     ) {
@@ -108,15 +104,14 @@ fun ActSubjectCard(
                 Box(
                     modifier = Modifier
                         .width(4.dp)
-                        .height(40.dp)
+                        .height(36.dp)
                         .clip(CircleShape)
                         .background(subjectColor)
                 )
                 Spacer(modifier = Modifier.width(16.dp))
                 Text(
                     text = subjectName,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    style = MaterialTheme.typography.titleMedium
                 )
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -126,9 +121,8 @@ fun ActSubjectCard(
                 ) {
                     Text(
                         text = "$accuracy% Acc",
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                        style = MaterialTheme.typography.labelMedium
                     )
                 }
                 Spacer(modifier = Modifier.width(12.dp))
@@ -152,10 +146,10 @@ fun ActPassageCard(
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
         border = androidx.compose.foundation.BorderStroke(
             1.dp,
-            MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)
+            MaterialTheme.colorScheme.outline.copy(alpha = 0.12f)
         )
     ) {
         Column(
@@ -163,23 +157,23 @@ fun ActPassageCard(
         ) {
             Text(
                 text = "Reading Passage",
-                style = MaterialTheme.typography.labelMedium,
+                style = MaterialTheme.typography.labelSmall,
                 color = BlueprintBlue,
-                fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 12.dp)
             )
             if (useMath) {
                 ActMathText(
                     latex = passage,
-                    fontSize = 14,
+                    fontSize = 15,
                     textColor = MaterialTheme.colorScheme.onSurface
                 )
             } else {
                 Text(
                     text = passage,
-                    style = MaterialTheme.typography.bodyMedium.copy(
+                    style = MaterialTheme.typography.bodyLarge.copy(
                         fontFamily = LoraFontFamily,
-                        lineHeight = 24.sp
+                        fontSize = 15.sp,
+                        lineHeight = 26.sp
                     ),
                     color = MaterialTheme.colorScheme.onSurface
                 )

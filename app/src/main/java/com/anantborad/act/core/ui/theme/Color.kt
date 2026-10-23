@@ -14,6 +14,11 @@ val BorderSlate = Color(0xFFe2e8f0)
 val Indigo600 = Color(0xFF4f46e5)
 val Purple600 = Color(0xFF9333ea)
 
+// Streak & Stat Colors
+val Orange500 = Color(0xFFea580c)
+val Orange100 = Color(0xFFFFEDD5)
+val Blue100 = Color(0xFFdbeafe)
+
 // Subject Colors
 val EnglishRose = Color(0xFFe11d48) // rose-600
 val EnglishRoseBg = Color(0xFFfff1f2) // rose-50

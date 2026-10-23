@@ -27,7 +27,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.anantborad.act.core.ui.theme.BlueprintBlue
 import com.anantborad.act.core.ui.theme.Indigo600
 import com.anantborad.act.core.ui.theme.Purple600
@@ -55,8 +54,7 @@ fun ActButton(
     ) {
         Text(
             text = text,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
+            style = MaterialTheme.typography.titleMedium
         )
     }
 }
@@ -72,14 +70,14 @@ fun ActGradientButton(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(32.dp))
+            .clip(RoundedCornerShape(24.dp))
             .background(
                 brush = Brush.linearGradient(
                     colors = listOf(BlueprintBlue, Indigo600, Purple600)
                 )
             )
             .clickable(onClick = onClick)
-            .padding(vertical = 32.dp),
+            .padding(vertical = 28.dp),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -88,26 +86,25 @@ fun ActGradientButton(
         ) {
             Box(
                 modifier = Modifier
-                    .size(64.dp)
+                    .size(56.dp)
                     .clip(CircleShape)
                     .background(Color.White.copy(alpha = 0.2f))
-                    .padding(16.dp),
+                    .padding(14.dp),
                 contentAlignment = Alignment.Center
             ) {
                 icon()
             }
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = title,
-                style = MaterialTheme.typography.headlineSmall,
-                color = Color.White,
-                fontWeight = FontWeight.Bold
+                style = MaterialTheme.typography.headlineMedium,
+                color = Color.White
             )
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color.White.copy(alpha = 0.8f),
-                fontWeight = FontWeight.Medium
+                color = Color.White.copy(alpha = 0.85f)
             )
         }
     }
@@ -126,30 +123,29 @@ fun ActChoiceChip(
         onClick = onClick,
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        color = if (isSelected) BlueprintBlue.copy(alpha = 0.1f) else Color.White,
+        color = if (isSelected) BlueprintBlue.copy(alpha = 0.08f) else Color.White,
         border = androidx.compose.foundation.BorderStroke(
-            width = 1.dp,
-            color = if (isSelected) BlueprintBlue else MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+            width = if (isSelected) 1.5.dp else 1.dp,
+            color = if (isSelected) BlueprintBlue else MaterialTheme.colorScheme.outline.copy(alpha = 0.15f)
         )
     ) {
         Row(
             modifier = Modifier
-                .padding(vertical = 8.dp, horizontal = 16.dp),
+                .padding(vertical = 12.dp, horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(32.dp)
-                    .clip(RoundedCornerShape(8.dp))
+                    .size(36.dp)
+                    .clip(RoundedCornerShape(10.dp))
                     .background(
                         if (isSelected) BlueprintBlue else MaterialTheme.colorScheme.surfaceVariant
-                    )
-                    .align(Alignment.CenterVertically),
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = label,
-                    style = MaterialTheme.typography.labelLarge,
+                    style = MaterialTheme.typography.labelMedium,
                     color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }

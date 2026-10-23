@@ -29,10 +29,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.anantborad.act.core.ui.theme.Blue100
+import com.anantborad.act.core.ui.theme.BlueprintBlue
 import com.anantborad.act.core.ui.theme.EnglishRose
 import com.anantborad.act.core.ui.theme.MathBlue
+import com.anantborad.act.core.ui.theme.Orange100
+import com.anantborad.act.core.ui.theme.Orange500
 import com.anantborad.act.core.ui.theme.ReadingEmerald
 import com.anantborad.act.main.domain.model.PracticeSubject
 import com.anantborad.act.main.presentation.ui.components.ActGradientButton
@@ -83,11 +86,11 @@ fun HomeScreen(
                             Icon(
                                 imageVector = Icons.Default.Whatshot,
                                 contentDescription = null,
-                                tint = Color(0xFFEA580C),
+                                tint = Orange500,
                                 modifier = Modifier.size(20.dp)
                             )
                         },
-                        iconBgColor = Color(0xFFFFEDD5),
+                        iconBgColor = Orange100,
                         modifier = Modifier.weight(1f)
                     )
                     ActStatCard(
@@ -97,16 +100,16 @@ fun HomeScreen(
                             Icon(
                                 imageVector = Icons.Default.Adjust,
                                 contentDescription = null,
-                                tint = Color(0xFF2563EB),
+                                tint = BlueprintBlue,
                                 modifier = Modifier.size(20.dp)
                             )
                         },
-                        iconBgColor = Color(0xFFDBEAFE),
+                        iconBgColor = Blue100,
                         modifier = Modifier.weight(1f)
                     )
                 }
 
-                Spacer(modifier = Modifier.height(40.dp))
+                Spacer(modifier = Modifier.height(32.dp))
 
                 ActGradientButton(
                     onClick = onQuickStartClick,
@@ -122,7 +125,7 @@ fun HomeScreen(
                     }
                 )
 
-                Spacer(modifier = Modifier.height(40.dp))
+                Spacer(modifier = Modifier.height(32.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -131,11 +134,13 @@ fun HomeScreen(
                 ) {
                     Text(
                         text = "Focus Areas",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
+                        style = MaterialTheme.typography.titleLarge
                     )
                     TextButton(onClick = onViewAllClick) {
-                        Text(text = "View All")
+                        Text(
+                            text = "View All",
+                            style = MaterialTheme.typography.labelMedium
+                        )
                         Icon(
                             imageVector = Icons.Default.ChevronRight,
                             contentDescription = null,
