@@ -2,23 +2,28 @@ package com.anantborad.act.main.presentation.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
@@ -31,6 +36,7 @@ import com.anantborad.act.main.presentation.ui.components.ActHeader
 import com.anantborad.act.main.presentation.ui.components.ActSubjectCard
 import com.anantborad.act.main.presentation.viewmodels.HubViewModel
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun HubScreen(
     viewModel: HubViewModel,
@@ -38,6 +44,8 @@ fun HubScreen(
     onSkillClick: (String) -> Unit = {},
     onBackClick: () -> Unit = {}
 ) {
+    val uiState by viewModel.uiState.collectAsState()
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
@@ -46,42 +54,38 @@ fun HubScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(horizontal = 24.dp)
+                .verticalScroll(rememberScrollState())
         ) {
             ActHeader(
                 title = "Practice Hub",
                 onBackClick = onBackClick
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            // Search Bar
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(16.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.12f))
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+            // Interactive Search Bar
+            OutlinedTextField(
+                value = uiState.searchQuery,
+                onValueChange = { viewModel.onSearchQueryChanged(it) },
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("Search skills or topics...") },
+                leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.Search,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        contentDescription = "Search"
                     )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = "Search skills or topics...",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                    )
-                }
-            }
+                },
+                shape = RoundedCornerShape(16.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                    focusedContainerColor = Color.White,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.12f),
+                    focusedBorderColor = MathBlue
+                ),
+                singleLine = true
+            )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(28.dp))
 
             Text(
                 text = "Core Subjects",
@@ -91,11 +95,12 @@ fun HubScreen(
 
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 PracticeSubject.values().forEach { subject ->
-                    val (color, accuracy) = when (subject) {
-                        PracticeSubject.ENGLISH -> EnglishRose to 82
-                        PracticeSubject.MATH -> MathBlue to 71
-                        PracticeSubject.READING -> ReadingEmerald to 85
+                    val color = when (subject) {
+                        PracticeSubject.ENGLISH -> EnglishRose
+                        PracticeSubject.MATH -> MathBlue
+                        PracticeSubject.READING -> ReadingEmerald
                     }
+                    val accuracy = uiState.subjectAccuracies[subject] ?: 0
 
                     ActSubjectCard(
                         subjectName = subject.displayName,
@@ -106,29 +111,29 @@ fun HubScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(28.dp))
 
             Text(
-                text = "Trending Skills",
+                text = if (uiState.searchQuery.isBlank()) "Practice Skills" else "Search Results",
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
-            Row(
+            FlowRow(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                listOf("Coordinate Geometry", "Punctuation").forEach { skill ->
+                uiState.filteredSkills.forEach { skill ->
                     Surface(
                         onClick = { onSkillClick(skill) },
-                        modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(16.dp),
                         color = Color.White,
                         border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.12f))
                     ) {
                         Text(
                             text = skill,
-                            modifier = Modifier.padding(16.dp),
+                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 14.dp),
                             style = MaterialTheme.typography.titleMedium,
                             textAlign = TextAlign.Center
                         )

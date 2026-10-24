@@ -8,9 +8,11 @@ import androidx.room.TypeConverters
     entities = [
         EnglishTestEntity::class,
         MathQuestionEntity::class,
-        ReadingPassageEntity::class
+        ReadingPassageEntity::class,
+        UserSessionEntity::class,
+        UserAnswerEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 @TypeConverters(RoomConverters::class)

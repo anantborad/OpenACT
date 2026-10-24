@@ -18,6 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -30,7 +31,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import androidx.compose.ui.platform.LocalContext
 import androidx.room.Room
 import com.anantborad.act.core.ui.theme.BlueprintBlue
 import com.anantborad.act.main.data.QuestionDataSourceImpl
@@ -61,6 +61,8 @@ fun ActNavHost() {
     val repository: QuestionRepository = remember {
         QuestionRepositoryImpl(QuestionDataSourceImpl(context.assets), database.questionDao(), context.applicationContext)
     }
+
+    val startDestination = if (repository.isOnboardingCompleted()) HomeRoute else OnboardingRoute
 
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -114,11 +116,12 @@ fun ActNavHost() {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = HomeRoute,
+            startDestination = startDestination,
             modifier = Modifier.padding(innerPadding)
         ) {
             composable<OnboardingRoute> {
                 OnboardingScreen(onFinish = {
+                    repository.setOnboardingCompleted(true)
                     navController.navigate(HomeRoute) {
                         popUpTo(OnboardingRoute) { inclusive = true }
                     }
@@ -196,6 +199,7 @@ fun ActNavHost() {
                     subject = PracticeSubject.valueOf(route.subject),
                     questionCount = route.questionCount,
                     difficulty = route.difficulty,
+                    skillFilter = route.skillFilter,
                     onFinishClick = { subject, score, total, time ->
                         navController.navigate(
                             ResultsRoute(
@@ -245,14 +249,26 @@ fun ActNavHost() {
                 )
             }
             composable<StatsRoute> {
-                val viewModel: StatsViewModel = viewModel()
+                val viewModel: StatsViewModel = viewModel(
+                    factory = object : ViewModelProvider.Factory {
+                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                            return StatsViewModel(repository) as T
+                        }
+                    }
+                )
                 StatsScreen(
                     viewModel = viewModel,
                     onBackClick = { navController.popBackStack() }
                 )
             }
             composable<ProfileRoute> {
-                val viewModel: ProfileViewModel = viewModel()
+                val viewModel: ProfileViewModel = viewModel(
+                    factory = object : ViewModelProvider.Factory {
+                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                            return ProfileViewModel(repository) as T
+                        }
+                    }
+                )
                 ProfileScreen(
                     viewModel = viewModel,
                     onBackClick = { navController.popBackStack() }
@@ -262,14 +278,30 @@ fun ActNavHost() {
                 ProgressScreen(onBackClick = { navController.popBackStack() })
             }
             composable<SkillDetailRoute> { backStackEntry ->
-                val viewModel: SkillDetailViewModel = viewModel()
+                val viewModel: SkillDetailViewModel = viewModel(
+                    factory = object : ViewModelProvider.Factory {
+                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                            return SkillDetailViewModel(repository) as T
+                        }
+                    }
+                )
                 val detail: SkillDetailRoute = backStackEntry.toRoute()
                 SkillDetailScreen(
                     viewModel = viewModel,
                     skillName = detail.skillName,
                     onBackClick = { navController.popBackStack() },
-                    onStartPracticeClick = { 
-                        navController.navigate(SessionRoute(subject = PracticeSubject.MATH.name)) 
+                    onStartPracticeClick = {
+                        val targetSubject = when {
+                            detail.skillName.contains("Punctuation", ignoreCase = true) || detail.skillName.contains("Grammar", ignoreCase = true) || detail.skillName.contains("Sentence", ignoreCase = true) -> PracticeSubject.ENGLISH
+                            detail.skillName.contains("Passage", ignoreCase = true) -> PracticeSubject.READING
+                            else -> PracticeSubject.MATH
+                        }
+                        navController.navigate(
+                            SessionRoute(
+                                subject = targetSubject.name,
+                                skillFilter = detail.skillName
+                            )
+                        )
                     }
                 )
             }

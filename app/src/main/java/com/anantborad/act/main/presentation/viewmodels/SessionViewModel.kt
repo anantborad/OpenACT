@@ -14,17 +14,18 @@ data class SessionState(
     val questions: List<PracticeQuestion> = emptyList(),
     val currentQuestionIndex: Int = 0,
     val selectedOptionId: String? = null,
-    val answers: Map<String, String> = emptyMap(), // QuestionId -> OptionId
+    val answers: Map<String, String> = emptyMap(),
     val isLoading: Boolean = false,
     val error: String? = null,
     val isFinished: Boolean = false,
     val startTimeSeconds: Long = 0,
     val timeElapsedSeconds: Long = 0,
-    val score: Int = 0
+    val score: Int = 0,
+    val sessionId: Long = 0
 ) {
     val currentQuestion: PracticeQuestion?
         get() = questions.getOrNull(currentQuestionIndex)
-    
+
     val progress: Float
         get() = if (questions.isEmpty()) 0f else (currentQuestionIndex + 1).toFloat() / questions.size
 }
@@ -36,17 +37,22 @@ class SessionViewModel(
     private val _uiState = MutableStateFlow(SessionState())
     val uiState: StateFlow<SessionState> = _uiState.asStateFlow()
 
-    fun startSession(subject: PracticeSubject, limit: Int = 5) {
+    fun startSession(
+        subject: PracticeSubject,
+        limit: Int = 10,
+        difficulty: String = "Mixed",
+        skillFilter: String? = null
+    ) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(
                 isLoading = true,
                 startTimeSeconds = System.currentTimeMillis() / 1000
             )
             try {
-                val questions = repository.getPracticeQuestions(subject, limit)
+                val questions = repository.getPracticeQuestions(subject, limit, difficulty, skillFilter)
                 if (questions.isEmpty()) {
                     _uiState.value = _uiState.value.copy(
-                        error = "No questions found for this subject. Please check your data.",
+                        error = "No questions found for this configuration.",
                         isLoading = false
                     )
                 } else {
@@ -68,7 +74,7 @@ class SessionViewModel(
         _uiState.value = _uiState.value.copy(selectedOptionId = optionId)
     }
 
-    fun onNextClick() {
+    fun onNextClick(difficulty: String = "Mixed") {
         val currentState = _uiState.value
         val currentQuestion = currentState.currentQuestion ?: return
         val selectedOption = currentState.selectedOptionId ?: return
@@ -84,17 +90,28 @@ class SessionViewModel(
                 answers = newAnswers
             )
         } else {
-            val finalScore = currentState.questions.count { q ->
-                newAnswers[q.id] == q.correctOptionId
-            }
             val endTime = System.currentTimeMillis() / 1000
-            repository.saveLastSessionAnswers(newAnswers)
-            _uiState.value = currentState.copy(
-                isFinished = true,
-                answers = newAnswers,
-                score = finalScore,
-                timeElapsedSeconds = endTime - currentState.startTimeSeconds
-            )
+            val elapsed = endTime - currentState.startTimeSeconds
+            viewModelScope.launch {
+                val currentSubject = currentQuestion.subject
+                val createdSessionId = repository.saveSessionResult(
+                    subject = currentSubject,
+                    questions = currentState.questions,
+                    answers = newAnswers,
+                    timeSeconds = elapsed,
+                    difficulty = difficulty
+                )
+                val finalScore = currentState.questions.count { q ->
+                    newAnswers[q.id] == q.correctOptionId
+                }
+                _uiState.value = currentState.copy(
+                    isFinished = true,
+                    answers = newAnswers,
+                    score = finalScore,
+                    timeElapsedSeconds = elapsed,
+                    sessionId = createdSessionId
+                )
+            }
         }
     }
 }

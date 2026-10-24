@@ -44,13 +44,14 @@ fun SessionScreen(
     subject: PracticeSubject,
     questionCount: Int = 10,
     difficulty: String = "Mixed",
+    skillFilter: String? = null,
     onFinishClick: (subject: String, score: Int, total: Int, timeSeconds: Long) -> Unit = { _, _, _, _ -> },
     onCloseClick: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    LaunchedEffect(subject) {
-        viewModel.startSession(subject, questionCount)
+    LaunchedEffect(subject, difficulty, skillFilter) {
+        viewModel.startSession(subject, questionCount, difficulty, skillFilter)
     }
 
     LaunchedEffect(uiState.isFinished) {
@@ -106,7 +107,7 @@ fun SessionScreen(
                 Box(modifier = Modifier.padding(24.dp)) {
                     ActButton(
                         text = if (uiState.currentQuestionIndex == uiState.questions.size - 1) "Finish Session" else "Next Question",
-                        onClick = { viewModel.onNextClick() },
+                        onClick = { viewModel.onNextClick(difficulty) },
                         enabled = uiState.selectedOptionId != null,
                         containerColor = MathBlue
                     )

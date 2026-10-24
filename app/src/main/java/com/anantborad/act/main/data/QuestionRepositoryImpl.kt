@@ -1,5 +1,7 @@
 package com.anantborad.act.main.data
 
+import android.content.Context
+import android.util.Log
 import com.anantborad.act.main.data.dto.*
 import com.anantborad.act.main.data.local.*
 import com.anantborad.act.main.domain.QuestionRepository
@@ -8,10 +10,10 @@ import com.anantborad.act.main.presentation.models.EnglishTestUiModel
 import com.anantborad.act.main.presentation.models.MathTestUiModel
 import com.anantborad.act.main.presentation.models.ReadingPassageUiModel
 import com.anantborad.act.main.presentation.models.toUiModel
-import com.anantborad.act.main.presentation.util.MOCK_USER_STATS
-import android.content.Context
-import android.util.Log
 import kotlinx.coroutines.*
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import kotlin.system.measureTimeMillis
 
 class QuestionRepositoryImpl(
@@ -28,6 +30,16 @@ class QuestionRepositoryImpl(
 
     private var lastSessionQuestions: List<PracticeQuestion> = emptyList()
     private var lastSessionAnswers: Map<String, String> = emptyMap()
+
+    init {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                ensureDatabasePopulated()
+            } catch (e: Exception) {
+                Log.e("QuestionRepositoryImpl", "Background database prepopulation error: ${e.message}")
+            }
+        }
+    }
 
     private suspend fun ensureDatabasePopulated() {
         if (!isPopulated || isDatabaseEmpty()) {
@@ -154,7 +166,95 @@ class QuestionRepositoryImpl(
     }
 
     override suspend fun getUserStats(): UserStats = withContext(Dispatchers.IO) {
-        MOCK_USER_STATS
+        val sessions = questionDao.getAllSessions()
+        val answers = questionDao.getAllUserAnswers()
+
+        val userName = getUserName()
+        val totalQuestions = answers.size
+
+        if (sessions.isEmpty()) {
+            return@withContext UserStats(
+                name = userName,
+                streak = calculateStreak(sessions),
+                dailyGoal = "0/3 sessions",
+                accuracy = 0,
+                totalQuestions = 0,
+                subjects = listOf(
+                    SubjectStats("English", 0, "0%"),
+                    SubjectStats("Math", 0, "0%"),
+                    SubjectStats("Reading", 0, "0%")
+                ),
+                weakSkills = listOf(
+                    SkillStat("Geometry", "Math", 0),
+                    SkillStat("Punctuation", "English", 0)
+                )
+            )
+        }
+
+        val overallAccuracy = if (totalQuestions > 0) {
+            (answers.count { it.isCorrect } * 100) / totalQuestions
+        } else 0
+
+        val subjectStats = PracticeSubject.values().map { subject ->
+            val subjectAnswers = answers.filter { it.subject.equals(subject.name, ignoreCase = true) }
+            val accuracy = if (subjectAnswers.isNotEmpty()) {
+                (subjectAnswers.count { it.isCorrect } * 100) / subjectAnswers.size
+            } else 0
+            SubjectStats(subject.displayName, accuracy, "+0%")
+        }
+
+        // Weakest skills calculation
+        val skillGroups = answers.groupBy { it.skill }
+        val weakSkillsList = skillGroups.map { (skill, list) ->
+            val acc = if (list.isNotEmpty()) (list.count { it.isCorrect } * 100) / list.size else 0
+            val subject = list.firstOrNull()?.subject ?: "General"
+            SkillStat(skill, subject, acc)
+        }.sortedBy { it.accuracy }.take(2)
+
+        val fallbackWeakSkills = if (weakSkillsList.isNotEmpty()) weakSkillsList else listOf(
+            SkillStat("Geometry", "Math", 45),
+            SkillStat("Punctuation", "English", 52)
+        )
+
+        val todayStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+        val todaySessions = sessions.count {
+            SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(it.timestamp)) == todayStr
+        }
+        val targetGoal = sharedPrefs.getInt("daily_goal_target", 3)
+
+        UserStats(
+            name = userName,
+            streak = calculateStreak(sessions),
+            dailyGoal = "$todaySessions/$targetGoal sessions",
+            accuracy = overallAccuracy,
+            totalQuestions = totalQuestions,
+            subjects = subjectStats,
+            weakSkills = fallbackWeakSkills
+        )
+    }
+
+    private fun calculateStreak(sessions: List<UserSessionEntity>): Int {
+        if (sessions.isEmpty()) return 0
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val sessionDates = sessions.map { dateFormat.format(Date(it.timestamp)) }.distinct().sortedDescending()
+        if (sessionDates.isEmpty()) return 0
+
+        val today = dateFormat.format(Date())
+        var streak = 0
+        var checkDate = Date()
+
+        for (i in 0..30) {
+            val dateStr = dateFormat.format(checkDate)
+            if (sessionDates.contains(dateStr)) {
+                streak++
+            } else if (i == 0 && !sessionDates.contains(today)) {
+                // Today has no session yet, check if yesterday had
+            } else {
+                break
+            }
+            checkDate = Date(checkDate.time - 24 * 60 * 60 * 1000)
+        }
+        return streak
     }
 
     override fun getLastSessionQuestions(): List<PracticeQuestion> = lastSessionQuestions
@@ -165,16 +265,105 @@ class QuestionRepositoryImpl(
 
     override fun getLastSessionAnswers(): Map<String, String> = lastSessionAnswers
 
+    override suspend fun saveSessionResult(
+        subject: PracticeSubject,
+        questions: List<PracticeQuestion>,
+        answers: Map<String, String>,
+        timeSeconds: Long,
+        difficulty: String
+    ): Long = withContext(Dispatchers.IO) {
+        val score = questions.count { q -> answers[q.id] == q.correctOptionId }
+        val sessionEntity = UserSessionEntity(
+            subject = subject.name,
+            score = score,
+            totalQuestions = questions.size,
+            timeSeconds = timeSeconds,
+            difficulty = difficulty,
+            timestamp = System.currentTimeMillis()
+        )
+        val sessionId = questionDao.insertUserSession(sessionEntity)
+
+        val answerEntities = questions.map { q ->
+            val userSelected = answers[q.id] ?: ""
+            UserAnswerEntity(
+                sessionId = sessionId,
+                questionId = q.id,
+                subject = subject.name,
+                skill = q.skill,
+                selectedOptionId = userSelected,
+                correctOptionId = q.correctOptionId,
+                isCorrect = userSelected == q.correctOptionId,
+                timestamp = System.currentTimeMillis()
+            )
+        }
+        questionDao.insertUserAnswers(answerEntities)
+        saveLastSessionAnswers(answers)
+        lastSessionQuestions = questions
+        sessionId
+    }
+
+    override suspend fun getRecentSessions(limit: Int): List<UserSessionEntity> = withContext(Dispatchers.IO) {
+        questionDao.getRecentSessions(limit)
+    }
+
+    override suspend fun getSessionAnswers(sessionId: Long): List<UserAnswerEntity> = withContext(Dispatchers.IO) {
+        questionDao.getAnswersForSession(sessionId)
+    }
+
+    override suspend fun getSkillMastery(skillName: String): Pair<Int, Int> = withContext(Dispatchers.IO) {
+        val attempts = questionDao.getUserAnswersForSkill(skillName)
+        if (attempts.isEmpty()) {
+            Pair(0, 0)
+        } else {
+            val accuracy = (attempts.count { it.isCorrect } * 100) / attempts.size
+            Pair(accuracy, attempts.size)
+        }
+    }
+
+    override suspend fun clearUserData() = withContext(Dispatchers.IO) {
+        questionDao.clearSessions()
+        questionDao.clearAnswers()
+        lastSessionQuestions = emptyList()
+        lastSessionAnswers = emptyMap()
+    }
+
+    override fun getUserName(): String {
+        return sharedPrefs.getString("user_name", "Alex") ?: "Alex"
+    }
+
+    override fun setUserName(name: String) {
+        sharedPrefs.edit().putString("user_name", name).apply()
+    }
+
+    override fun getDailyGoal(): String {
+        val target = sharedPrefs.getInt("daily_goal_target", 3)
+        return "$target sessions"
+    }
+
+    override fun setDailyGoal(goal: String) {
+        val target = goal.filter { it.isDigit() }.toIntOrNull() ?: 3
+        sharedPrefs.edit().putInt("daily_goal_target", target).apply()
+    }
+
+    override fun isOnboardingCompleted(): Boolean {
+        return sharedPrefs.getBoolean("onboarding_completed", false)
+    }
+
+    override fun setOnboardingCompleted(completed: Boolean) {
+        sharedPrefs.edit().putBoolean("onboarding_completed", completed).apply()
+    }
+
     override suspend fun getPracticeQuestions(
         subject: PracticeSubject,
-        limit: Int
+        limit: Int,
+        difficulty: String,
+        skillFilter: String?
     ): List<PracticeQuestion> = withContext(Dispatchers.IO) {
         var questions: List<PracticeQuestion> = emptyList()
         val time = measureTimeMillis {
             ensureDatabasePopulated()
             questions = when (subject) {
                 PracticeSubject.ENGLISH -> {
-                    // One test has 75 questions, so usually one test is enough
                     val testIds = questionDao.getEnglishTestIds()
                     if (testIds.isEmpty()) emptyList()
                     else {
@@ -183,51 +372,71 @@ class QuestionRepositoryImpl(
                         val passageStr = test.passage.joinToString("\n\n") { p ->
                             p.segments.joinToString("") { it.content }
                         }
-                        test.questions.shuffled().take(limit).map { q ->
+                        var filteredQs = test.questions
+                        if (!skillFilter.isNullOrBlank()) {
+                            val filterText = skillFilter
+                            filteredQs = filteredQs.filter { it.questionText.contains(filterText, ignoreCase = true) }
+                                .ifEmpty { test.questions }
+                        }
+                        filteredQs.shuffled().take(limit).map { q ->
                             PracticeQuestion(
                                 id = q.id.toString(),
                                 subject = PracticeSubject.ENGLISH,
-                                skill = "Grammar",
+                                skill = skillFilter ?: "Grammar & Punctuation",
                                 text = q.questionText,
                                 passage = passageStr,
                                 options = q.options.map { QuestionOption(it.key, it.key, it.value) },
                                 correctOptionId = q.options.firstOrNull()?.key ?: "A",
-                                explanation = "Explanation for English question ${q.id}"
+                                explanation = "Choose the option that adheres to ACT English standards for clarity and standard written conventions."
                             )
                         }
                     }
                 }
                 PracticeSubject.MATH -> {
-                    val allIds = questionDao.getMathIds()
-                    if (allIds.isEmpty()) emptyList()
-                    else {
-                        val randomIds = allIds.shuffled().take(limit)
-                        questionDao.getMathQuestionsByIds(randomIds).map { q ->
-                            PracticeQuestion(
-                                id = q.id.toString(),
-                                subject = PracticeSubject.MATH,
-                                skill = q.category,
-                                text = q.prompt,
-                                options = q.choices.map { QuestionOption(it.label, it.label, it.text) },
-                                correctOptionId = q.answer,
-                                explanation = q.explanation
-                            )
-                        }
+                    val mathQuestions = if (!skillFilter.isNullOrBlank()) {
+                        val categoryFilter = skillFilter
+                        questionDao.getMathQuestionsByCategory(categoryFilter)
+                            .ifEmpty { questionDao.getAllMathQuestions() }
+                    } else {
+                        questionDao.getAllMathQuestions()
+                    }
+
+                    var filtered = mathQuestions
+                    if (difficulty != "Mixed") {
+                        filtered = mathQuestions.filter { it.difficulty.equals(difficulty, ignoreCase = true) }
+                            .ifEmpty { mathQuestions }
+                    }
+
+                    filtered.shuffled().take(limit).map { q ->
+                        PracticeQuestion(
+                            id = q.id.toString(),
+                            subject = PracticeSubject.MATH,
+                            skill = q.category,
+                            text = q.prompt,
+                            options = q.choices.map { QuestionOption(it.label, it.label, it.text) },
+                            correctOptionId = q.answer,
+                            explanation = q.explanation
+                        )
                     }
                 }
                 PracticeSubject.READING -> {
-                    // One passage has 10 questions
-                    val passageIds = questionDao.getReadingPassageIds()
-                    if (passageIds.isEmpty()) emptyList()
+                    val passageEntities = if (!skillFilter.isNullOrBlank()) {
+                        val passageTypeFilter = skillFilter
+                        questionDao.getReadingPassagesByType(passageTypeFilter)
+                            .ifEmpty { questionDao.getAllReadingPassages() }
+                    } else {
+                        questionDao.getAllReadingPassages()
+                    }
+
+                    if (passageEntities.isEmpty()) emptyList()
                     else {
-                        val randomPassageId = passageIds.random()
-                        val item = questionDao.getReadingPassagesByIds(listOf(randomPassageId)).first()
-                        val passageStr = item.passage.joinToString("\n\n") { it.value }
-                        item.questions.shuffled().take(limit).map { q ->
+                        val randomPassage = passageEntities.random()
+                        val passageStr = randomPassage.passage.joinToString("\n\n") { it.value }
+                        randomPassage.questions.shuffled().take(limit).map { q ->
                             PracticeQuestion(
                                 id = q.number.toString(),
                                 subject = PracticeSubject.READING,
-                                skill = item.passageType,
+                                skill = randomPassage.passageType,
                                 text = q.prompt,
                                 passage = passageStr,
                                 options = q.choices.map { QuestionOption(it.label, it.label, it.text) },
@@ -239,8 +448,9 @@ class QuestionRepositoryImpl(
                 }
             }
         }
-        Log.d("ACT_PERF", "getPracticeQuestions ($subject) took ${time}ms")
+        Log.d("ACT_PERF", "getPracticeQuestions ($subject, diff=$difficulty, skill=$skillFilter) took ${time}ms")
         lastSessionQuestions = questions
         questions
     }
+
 }

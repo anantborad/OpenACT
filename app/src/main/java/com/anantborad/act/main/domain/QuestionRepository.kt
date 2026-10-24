@@ -1,5 +1,7 @@
 package com.anantborad.act.main.domain
 
+import com.anantborad.act.main.data.local.UserAnswerEntity
+import com.anantborad.act.main.data.local.UserSessionEntity
 import com.anantborad.act.main.domain.model.PracticeQuestion
 import com.anantborad.act.main.domain.model.PracticeSubject
 import com.anantborad.act.main.domain.model.UserStats
@@ -12,8 +14,35 @@ interface QuestionRepository {
     suspend fun getMathTests(): List<MathTestUiModel>
     suspend fun getReadingTests(): List<ReadingPassageUiModel>
     suspend fun getUserStats(): UserStats
-    suspend fun getPracticeQuestions(subject: PracticeSubject, limit: Int = 10): List<PracticeQuestion>
+    suspend fun getPracticeQuestions(
+        subject: PracticeSubject,
+        limit: Int = 10,
+        difficulty: String = "Mixed",
+        skillFilter: String? = null
+    ): List<PracticeQuestion>
     fun getLastSessionQuestions(): List<PracticeQuestion>
     fun saveLastSessionAnswers(answers: Map<String, String>)
     fun getLastSessionAnswers(): Map<String, String>
+
+    // Session Persistence & Analytics
+    suspend fun saveSessionResult(
+        subject: PracticeSubject,
+        questions: List<PracticeQuestion>,
+        answers: Map<String, String>,
+        timeSeconds: Long,
+        difficulty: String = "Mixed"
+    ): Long
+
+    suspend fun getRecentSessions(limit: Int = 10): List<UserSessionEntity>
+    suspend fun getSessionAnswers(sessionId: Long): List<UserAnswerEntity>
+    suspend fun getSkillMastery(skillName: String): Pair<Int, Int> // (accuracyPercent, totalAttempts)
+    suspend fun clearUserData()
+
+    // User Profile Preferences
+    fun getUserName(): String
+    fun setUserName(name: String)
+    fun getDailyGoal(): String
+    fun setDailyGoal(goal: String)
+    fun isOnboardingCompleted(): Boolean
+    fun setOnboardingCompleted(completed: Boolean)
 }

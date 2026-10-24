@@ -6,11 +6,17 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.anantborad.act.core.ui.theme.BlueprintBlue
+import com.anantborad.act.core.ui.theme.EnglishRose
 import com.anantborad.act.core.ui.theme.MathBlue
+import com.anantborad.act.core.ui.theme.ReadingEmerald
 import com.anantborad.act.main.presentation.ui.components.ActButton
 import com.anantborad.act.main.presentation.ui.components.ActHeader
 import com.anantborad.act.main.presentation.viewmodels.SkillDetailViewModel
@@ -22,6 +28,19 @@ fun SkillDetailScreen(
     onBackClick: () -> Unit = {},
     onStartPracticeClick: () -> Unit = {}
 ) {
+    LaunchedEffect(skillName) {
+        viewModel.loadSkill(skillName)
+    }
+
+    val uiState by viewModel.uiState.collectAsState()
+
+    val statusColor = when {
+        uiState.masteryPercentage >= 80 -> ReadingEmerald
+        uiState.masteryPercentage >= 60 -> BlueprintBlue
+        uiState.totalAttempts == 0 -> Color.Gray
+        else -> EnglishRose
+    }
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
@@ -61,16 +80,16 @@ fun SkillDetailScreen(
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = "45%",
+                        text = if (uiState.totalAttempts > 0) "${uiState.masteryPercentage}%" else "--",
                         style = MaterialTheme.typography.displayLarge,
                         fontWeight = FontWeight.Bold,
-                        color = Color.Red.copy(alpha = 0.7f)
+                        color = statusColor
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "Needs Improvement",
+                        text = if (uiState.totalAttempts > 0) "${uiState.statusText} (${uiState.totalAttempts} questions answered)" else uiState.statusText,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -86,14 +105,7 @@ fun SkillDetailScreen(
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
-            val concepts = listOf(
-                "Coordinate Geometry Principles",
-                "Slope and Intercept Calculations",
-                "Distance and Midpoint Formulas",
-                "Circle Equations and Properties"
-            )
-
-            concepts.forEach { concept ->
+            uiState.keyConcepts.forEach { concept ->
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()

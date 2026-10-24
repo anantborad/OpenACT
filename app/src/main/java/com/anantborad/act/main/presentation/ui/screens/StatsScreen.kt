@@ -23,6 +23,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -35,7 +37,6 @@ import com.anantborad.act.core.ui.theme.EnglishRoseBg
 import com.anantborad.act.core.ui.theme.MathBlue
 import com.anantborad.act.core.ui.theme.ReadingEmerald
 import com.anantborad.act.main.presentation.ui.components.ActHeader
-import com.anantborad.act.main.presentation.util.MOCK_USER_STATS
 import com.anantborad.act.main.presentation.viewmodels.StatsViewModel
 
 @Composable
@@ -43,6 +44,9 @@ fun StatsScreen(
     viewModel: StatsViewModel,
     onBackClick: () -> Unit = {}
 ) {
+    val uiState by viewModel.uiState.collectAsState()
+    val stats = uiState.userStats
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
@@ -60,141 +64,147 @@ fun StatsScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Balanced Overall Accuracy Card
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                color = Color.White,
-                border = androidx.compose.foundation.BorderStroke(
-                    1.dp,
-                    MaterialTheme.colorScheme.outline.copy(alpha = 0.12f)
-                ),
-                shadowElevation = 1.dp
-            ) {
-                Row(
-                    modifier = Modifier.padding(20.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+            if (stats != null) {
+                // Balanced Overall Accuracy Card
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(20.dp),
+                    color = Color.White,
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp,
+                        MaterialTheme.colorScheme.outline.copy(alpha = 0.12f)
+                    ),
+                    shadowElevation = 1.dp
                 ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Surface(
-                            color = BlueprintBlue.copy(alpha = 0.1f),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Text(
-                                text = "OVERALL ACCURACY",
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = BlueprintBlue
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Text(
-                            text = "Total Mastery",
-                            style = MaterialTheme.typography.titleLarge
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = "Based on ${MOCK_USER_STATS.totalQuestions} questions answered",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    // Circular Gauge Ring
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.size(72.dp)
+                    Row(
+                        modifier = Modifier.padding(20.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        CircularProgressIndicator(
-                            progress = { MOCK_USER_STATS.accuracy.toFloat() / 100f },
-                            modifier = Modifier.fillMaxSize(),
-                            color = BlueprintBlue,
-                            strokeWidth = 7.dp,
-                            trackColor = BlueprintBlue.copy(alpha = 0.12f),
-                            strokeCap = StrokeCap.Round
-                        )
-                        Text(
-                            text = "${MOCK_USER_STATS.accuracy}%",
-                            style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            Text(
-                text = "Subject Performance",
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
-
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                MOCK_USER_STATS.subjects.forEach { subjectStat ->
-                    val color = when (subjectStat.name) {
-                        "English" -> EnglishRose
-                        "Math" -> MathBlue
-                        else -> ReadingEmerald
-                    }
-                    SubjectStatCard(subjectStat.name, subjectStat.accuracy, color)
-                }
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            Text(
-                text = "Weakest Skills",
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
-
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                MOCK_USER_STATS.weakSkills.forEach { skill ->
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        color = Color.White,
-                        border = androidx.compose.foundation.BorderStroke(
-                            1.dp,
-                            MaterialTheme.colorScheme.outline.copy(alpha = 0.12f)
-                        ),
-                        shadowElevation = 1.dp
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = skill.name,
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-                                Spacer(modifier = Modifier.height(2.dp))
-                                Text(
-                                    text = skill.subject,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
                             Surface(
-                                color = EnglishRoseBg,
+                                color = BlueprintBlue.copy(alpha = 0.1f),
                                 shape = RoundedCornerShape(8.dp)
                             ) {
                                 Text(
-                                    text = "${skill.accuracy}% Acc",
+                                    text = "OVERALL ACCURACY",
                                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = EnglishRose
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = BlueprintBlue
                                 )
+                            }
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Text(
+                                text = "Total Mastery",
+                                style = MaterialTheme.typography.titleLarge
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "Based on ${stats.totalQuestions} questions answered",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(16.dp))
+
+                        // Circular Gauge Ring
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier.size(72.dp)
+                        ) {
+                            CircularProgressIndicator(
+                                progress = { stats.accuracy.toFloat() / 100f },
+                                modifier = Modifier.fillMaxSize(),
+                                color = BlueprintBlue,
+                                strokeWidth = 7.dp,
+                                trackColor = BlueprintBlue.copy(alpha = 0.12f),
+                                strokeCap = StrokeCap.Round
+                            )
+                            Text(
+                                text = "${stats.accuracy}%",
+                                style = MaterialTheme.typography.titleLarge,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                Text(
+                    text = "Subject Performance",
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    stats.subjects.forEach { subjectStat ->
+                        val color = when (subjectStat.name) {
+                            "English" -> EnglishRose
+                            "Math" -> MathBlue
+                            else -> ReadingEmerald
+                        }
+                        SubjectStatCard(subjectStat.name, subjectStat.accuracy, color)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                Text(
+                    text = "Weakest Skills",
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    stats.weakSkills.forEach { skill ->
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            color = Color.White,
+                            border = androidx.compose.foundation.BorderStroke(
+                                1.dp,
+                                MaterialTheme.colorScheme.outline.copy(alpha = 0.12f)
+                            ),
+                            shadowElevation = 1.dp
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = skill.name,
+                                        style = MaterialTheme.typography.titleMedium
+                                    )
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text(
+                                        text = skill.subject,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Surface(
+                                    color = EnglishRoseBg,
+                                    shape = RoundedCornerShape(8.dp)
+                                ) {
+                                    Text(
+                                        text = "${skill.accuracy}% Acc",
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = EnglishRose
+                                    )
+                                }
                             }
                         }
                     }
+                }
+            } else {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
                 }
             }
 

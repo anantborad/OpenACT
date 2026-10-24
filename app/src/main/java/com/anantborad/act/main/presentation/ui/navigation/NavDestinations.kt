@@ -18,7 +18,8 @@ data class SetupRoute(val subject: String)
 data class SessionRoute(
     val subject: String,
     val questionCount: Int = 10,
-    val difficulty: String = "Mixed"
+    val difficulty: String = "Mixed",
+    val skillFilter: String? = null
 )
 
 @Serializable

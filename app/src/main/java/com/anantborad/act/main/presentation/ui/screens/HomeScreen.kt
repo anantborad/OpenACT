@@ -52,6 +52,10 @@ fun HomeScreen(
     onViewAllClick: () -> Unit = {},
     onProfileClick: () -> Unit = {}
 ) {
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        viewModel.loadUserStats()
+    }
+
     val uiState by viewModel.uiState.collectAsState()
     val userStats = uiState.userStats
 
@@ -166,8 +170,27 @@ fun HomeScreen(
                         )
                     }
                 }
-            } ?: Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+            } ?: Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(300.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                if (uiState.error != null) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = uiState.error ?: "Unable to load dashboard",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        androidx.compose.material3.Button(onClick = { viewModel.loadUserStats() }) {
+                            Text("Retry")
+                        }
+                    }
+                } else {
+                    CircularProgressIndicator()
+                }
             }
 
             Spacer(modifier = Modifier.height(32.dp))

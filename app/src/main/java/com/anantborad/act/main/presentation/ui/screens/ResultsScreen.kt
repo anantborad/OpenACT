@@ -34,6 +34,10 @@ fun ResultsScreen(
     onHomeClick: () -> Unit = {},
     onReviewClick: () -> Unit = {}
 ) {
+    androidx.compose.runtime.LaunchedEffect(subject, score, total, timeSeconds) {
+        viewModel.setResults(subject, score, total, timeSeconds)
+    }
+
     val timeString = remember(timeSeconds) {
         val mins = timeSeconds / 60
         val secs = timeSeconds % 60

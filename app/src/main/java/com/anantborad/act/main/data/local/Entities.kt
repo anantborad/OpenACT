@@ -39,3 +39,30 @@ data class ReadingPassageEntity(
     val passage: List<PassageParagraphItemDto>,
     val questions: List<ReadingQuestionDto>
 )
+
+@Entity(tableName = "user_sessions")
+data class UserSessionEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val subject: String,
+    val score: Int,
+    val totalQuestions: Int,
+    val timeSeconds: Long,
+    val timestamp: Long = System.currentTimeMillis(),
+    val difficulty: String = "Mixed"
+)
+
+@Entity(
+    tableName = "user_answers",
+    indices = [Index(value = ["sessionId"]), Index(value = ["skill"])]
+)
+data class UserAnswerEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val sessionId: Long,
+    val questionId: String,
+    val subject: String,
+    val skill: String,
+    val selectedOptionId: String,
+    val correctOptionId: String,
+    val isCorrect: Boolean,
+    val timestamp: Long = System.currentTimeMillis()
+)

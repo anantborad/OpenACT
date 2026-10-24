@@ -6,6 +6,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -13,11 +16,23 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.anantborad.act.core.ui.theme.BlueprintBlue
 import com.anantborad.act.main.presentation.ui.components.ActHeader
+import com.anantborad.act.main.presentation.viewmodels.StatsViewModel
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun ProgressScreen(
+    viewModel: StatsViewModel? = null,
     onBackClick: () -> Unit = {}
 ) {
+    val uiState = viewModel?.uiState?.collectAsState()?.value
+    val recentSessions = uiState?.recentSessions ?: emptyList()
+    val totalSessions = recentSessions.size
+    val weeklyGoal = 10
+    val progressFraction = if (weeklyGoal > 0) (totalSessions.toFloat() / weeklyGoal).coerceAtMost(1f) else 0f
+    val percentText = "${(progressFraction * 100).toInt()}%"
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
@@ -56,7 +71,7 @@ fun ProgressScreen(
                     ) {
                         Column {
                             Text(
-                                text = "18/25",
+                                text = "$totalSessions/$weeklyGoal",
                                 style = MaterialTheme.typography.headlineLarge,
                                 fontWeight = FontWeight.Bold,
                                 color = BlueprintBlue
@@ -68,7 +83,7 @@ fun ProgressScreen(
                             )
                         }
                         Text(
-                            text = "72%",
+                            text = percentText,
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = BlueprintBlue
@@ -76,7 +91,7 @@ fun ProgressScreen(
                     }
                     Spacer(modifier = Modifier.height(16.dp))
                     LinearProgressIndicator(
-                        progress = { 0.72f },
+                        progress = { progressFraction },
                         modifier = Modifier.fillMaxWidth().height(8.dp),
                         color = BlueprintBlue,
                         trackColor = BlueprintBlue.copy(alpha = 0.1f)
@@ -93,41 +108,66 @@ fun ProgressScreen(
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
-            repeat(5) { index ->
+            if (recentSessions.isEmpty()) {
                 Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 12.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
                     color = Color.White,
                     border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
                 ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column {
-                            Text(
-                                text = if (index % 2 == 0) "Math Practice" else "English Review",
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = "${2 + index} hours ago • 15 questions",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
+                    Box(modifier = Modifier.padding(24.dp), contentAlignment = Alignment.Center) {
                         Text(
-                            text = if (index % 2 == 0) "+45 XP" else "+30 XP",
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = BlueprintBlue
+                            text = "No practice sessions recorded yet. Start a quick session to begin tracking!",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
+            } else {
+                recentSessions.forEach { session ->
+                    val dateFormatted = remember(session.timestamp) {
+                        SimpleDateFormat("MMM d, h:mm a", Locale.getDefault()).format(Date(session.timestamp))
+                    }
+                    val xpGained = session.score * 20
+                    val subjectName = session.subject.lowercase().replaceFirstChar { it.uppercase() }
+
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 12.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        color = Color.White,
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column {
+                                Text(
+                                    text = "$subjectName Practice",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = "$dateFormatted • ${session.score}/${session.totalQuestions} correct",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Text(
+                                text = "+$xpGained XP",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = BlueprintBlue
+                            )
+                        }
+                    }
+                }
             }
+
+            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }

@@ -69,4 +69,41 @@ interface QuestionDao {
 
     @Query("SELECT * FROM reading_passages ORDER BY RANDOM() LIMIT :limit")
     suspend fun getRandomReadingPassages(limit: Int): List<ReadingPassageEntity>
+
+    // Session & User Answer Queries
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertUserSession(session: UserSessionEntity): Long
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertUserAnswers(answers: List<UserAnswerEntity>)
+
+    @Query("SELECT * FROM user_sessions ORDER BY timestamp DESC")
+    suspend fun getAllSessions(): List<UserSessionEntity>
+
+    @Query("SELECT * FROM user_sessions ORDER BY timestamp DESC LIMIT :limit")
+    suspend fun getRecentSessions(limit: Int): List<UserSessionEntity>
+
+    @Query("SELECT * FROM user_sessions WHERE id = :sessionId")
+    suspend fun getSessionById(sessionId: Long): UserSessionEntity?
+
+    @Query("SELECT * FROM user_answers WHERE sessionId = :sessionId")
+    suspend fun getAnswersForSession(sessionId: Long): List<UserAnswerEntity>
+
+    @Query("SELECT * FROM user_answers")
+    suspend fun getAllUserAnswers(): List<UserAnswerEntity>
+
+    @Query("SELECT * FROM user_answers WHERE skill = :skill")
+    suspend fun getUserAnswersForSkill(skill: String): List<UserAnswerEntity>
+
+    @Query("SELECT * FROM math_questions WHERE category = :category")
+    suspend fun getMathQuestionsByCategory(category: String): List<MathQuestionEntity>
+
+    @Query("SELECT * FROM reading_passages WHERE passageType = :passageType")
+    suspend fun getReadingPassagesByType(passageType: String): List<ReadingPassageEntity>
+
+    @Query("DELETE FROM user_sessions")
+    suspend fun clearSessions()
+
+    @Query("DELETE FROM user_answers")
+    suspend fun clearAnswers()
 }

@@ -120,6 +120,27 @@ class QuestionRepositoryTest {
         override suspend fun getEnglishTestsByIds(ids: List<String>): List<EnglishTestEntity> = englishTests.filter { it.testId in ids }
         override suspend fun getReadingPassageIds(): List<Int> = readingPassages.map { it.id }
         override suspend fun getReadingPassagesByIds(ids: List<Int>): List<ReadingPassageEntity> = readingPassages.filter { it.id in ids }
+
+        val sessions = mutableListOf<com.anantborad.act.main.data.local.UserSessionEntity>()
+        val answers = mutableListOf<com.anantborad.act.main.data.local.UserAnswerEntity>()
+
+        override suspend fun insertUserSession(session: com.anantborad.act.main.data.local.UserSessionEntity): Long {
+            sessions.add(session)
+            return sessions.size.toLong()
+        }
+        override suspend fun insertUserAnswers(answersList: List<com.anantborad.act.main.data.local.UserAnswerEntity>) {
+            answers.addAll(answersList)
+        }
+        override suspend fun getAllSessions(): List<com.anantborad.act.main.data.local.UserSessionEntity> = sessions
+        override suspend fun getRecentSessions(limit: Int): List<com.anantborad.act.main.data.local.UserSessionEntity> = sessions.take(limit)
+        override suspend fun getSessionById(sessionId: Long): com.anantborad.act.main.data.local.UserSessionEntity? = sessions.firstOrNull { it.id == sessionId }
+        override suspend fun getAnswersForSession(sessionId: Long): List<com.anantborad.act.main.data.local.UserAnswerEntity> = answers.filter { it.sessionId == sessionId }
+        override suspend fun getAllUserAnswers(): List<com.anantborad.act.main.data.local.UserAnswerEntity> = answers
+        override suspend fun getUserAnswersForSkill(skill: String): List<com.anantborad.act.main.data.local.UserAnswerEntity> = answers.filter { it.skill == skill }
+        override suspend fun getMathQuestionsByCategory(category: String): List<MathQuestionEntity> = mathQuestions.filter { it.category == category }
+        override suspend fun getReadingPassagesByType(passageType: String): List<ReadingPassageEntity> = readingPassages.filter { it.passageType == passageType }
+        override suspend fun clearSessions() { sessions.clear() }
+        override suspend fun clearAnswers() { answers.clear() }
     }
 
     @Before

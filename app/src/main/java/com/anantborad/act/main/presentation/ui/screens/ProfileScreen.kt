@@ -1,6 +1,7 @@
 package com.anantborad.act.main.presentation.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -8,12 +9,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.Adjust
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,8 +25,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.anantborad.act.core.ui.theme.BlueprintBlue
 import com.anantborad.act.main.presentation.ui.components.ActHeader
-import com.anantborad.act.main.presentation.util.MOCK_USER_STATS
 import com.anantborad.act.main.presentation.viewmodels.ProfileViewModel
 
 @Composable
@@ -32,6 +34,62 @@ fun ProfileScreen(
     viewModel: ProfileViewModel,
     onBackClick: () -> Unit = {}
 ) {
+    val uiState by viewModel.uiState.collectAsState()
+    var showEditNameDialog by remember { mutableStateOf(false) }
+    var newNameText by remember { mutableStateOf(uiState.userName) }
+
+    var showClearDialog by remember { mutableStateOf(false) }
+
+    if (showEditNameDialog) {
+        AlertDialog(
+            onDismissRequest = { showEditNameDialog = false },
+            title = { Text("Edit Display Name") },
+            text = {
+                OutlinedTextField(
+                    value = newNameText,
+                    onValueChange = { newNameText = it },
+                    singleLine = true,
+                    label = { Text("Name") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.updateName(newNameText)
+                    showEditNameDialog = false
+                }) {
+                    Text("Save")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEditNameDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    if (showClearDialog) {
+        AlertDialog(
+            onDismissRequest = { showClearDialog = false },
+            title = { Text("Reset Progress Data") },
+            text = { Text("Are you sure you want to clear all your practice session history and reset statistics? This cannot be undone.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.clearHistory()
+                    showClearDialog = false
+                }) {
+                    Text("Reset Data", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showClearDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
@@ -61,20 +119,36 @@ fun ProfileScreen(
                         .background(MaterialTheme.colorScheme.surfaceVariant)
                 ) {
                     AsyncImage(
-                        model = "https://ui-avatars.com/api/?name=${MOCK_USER_STATS.name}&background=random&size=200",
+                        model = "https://ui-avatars.com/api/?name=${uiState.userName}&background=random&size=200",
                         contentDescription = "Profile Picture",
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
                 }
                 Spacer(modifier = Modifier.height(16.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = uiState.userName,
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    IconButton(onClick = {
+                        newNameText = uiState.userName
+                        showEditNameDialog = true
+                    }) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Edit Name",
+                            tint = BlueprintBlue,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
                 Text(
-                    text = MOCK_USER_STATS.name,
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "High School Junior",
+                    text = "Daily Goal: ${uiState.dailyGoal}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -83,16 +157,34 @@ fun ProfileScreen(
             Spacer(modifier = Modifier.height(40.dp))
 
             // Settings sections
-            ProfileSection("Account") {
-                ProfileMenuItem(icon = Icons.Default.Person, title = "Personal Information")
-                ProfileMenuItem(icon = Icons.Default.Notifications, title = "Notifications")
-                ProfileMenuItem(icon = Icons.Default.Shield, title = "Security & Privacy")
+            ProfileSection("Preferences") {
+                ProfileMenuItem(
+                    icon = Icons.Default.Person,
+                    title = "Edit Name",
+                    onClick = {
+                        newNameText = uiState.userName
+                        showEditNameDialog = true
+                    }
+                )
+                ProfileMenuItem(
+                    icon = Icons.Default.Adjust,
+                    title = "Daily Practice Goal (${uiState.dailyGoal})",
+                    onClick = {
+                        val nextGoal = if (uiState.dailyGoal.contains("3")) "5 sessions" else "3 sessions"
+                        viewModel.updateDailyGoal(nextGoal)
+                    }
+                )
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            ProfileSection("General") {
-                ProfileMenuItem(icon = Icons.AutoMirrored.Filled.Logout, title = "Log Out", color = Color.Red)
+            ProfileSection("Data & Privacy") {
+                ProfileMenuItem(
+                    icon = Icons.Default.Refresh,
+                    title = "Reset Practice History",
+                    color = Color.Red,
+                    onClick = { showClearDialog = true }
+                )
             }
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -122,10 +214,16 @@ fun ProfileSection(title: String, content: @Composable ColumnScope.() -> Unit) {
 }
 
 @Composable
-fun ProfileMenuItem(icon: ImageVector, title: String, color: Color = MaterialTheme.colorScheme.onSurface) {
+fun ProfileMenuItem(
+    icon: ImageVector,
+    title: String,
+    color: Color = MaterialTheme.colorScheme.onSurface,
+    onClick: () -> Unit = {}
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable(onClick = onClick)
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
