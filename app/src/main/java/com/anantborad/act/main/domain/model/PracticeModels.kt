@@ -27,8 +27,12 @@ data class PracticeQuestion(
 data class SubjectStats(
     val name: String,
     val accuracy: Int,
-    val trend: String
-)
+    val trend: String,
+    val hasPracticed: Boolean = true
+) {
+    val displayAccuracy: String
+        get() = if (hasPracticed) "$accuracy% Acc" else "--"
+}
 
 data class SkillStat(
     val name: String,
@@ -43,5 +47,7 @@ data class UserStats(
     val accuracy: Int,
     val totalQuestions: Int,
     val subjects: List<SubjectStats>,
-    val weakSkills: List<SkillStat>
+    val weakSkills: List<SkillStat>,
+    val goalActScore: Int = 32,
+    val targetAccuracy: Int = 88
 )

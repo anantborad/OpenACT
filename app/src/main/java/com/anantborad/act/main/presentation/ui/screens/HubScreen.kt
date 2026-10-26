@@ -100,11 +100,12 @@ fun HubScreen(
                         PracticeSubject.MATH -> MathBlue
                         PracticeSubject.READING -> ReadingEmerald
                     }
-                    val accuracy = uiState.subjectAccuracies[subject] ?: 0
+                    val accuracyPair = uiState.subjectAccuracies[subject]
+                    val accuracyText = if (accuracyPair != null && accuracyPair.second) "${accuracyPair.first}% Acc" else "--"
 
                     ActSubjectCard(
                         subjectName = subject.displayName,
-                        accuracy = accuracy,
+                        accuracyText = accuracyText,
                         subjectColor = color,
                         onClick = { onSubjectClick(subject) }
                     )

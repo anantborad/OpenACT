@@ -79,7 +79,7 @@ fun ActStatCard(
 @Composable
 fun ActSubjectCard(
     subjectName: String,
-    accuracy: Int,
+    accuracyText: String,
     subjectColor: Color,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -120,7 +120,7 @@ fun ActSubjectCard(
                     shape = RoundedCornerShape(8.dp)
                 ) {
                     Text(
-                        text = "$accuracy% Acc",
+                        text = accuracyText,
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                         style = MaterialTheme.typography.labelMedium
                     )
@@ -135,6 +135,23 @@ fun ActSubjectCard(
             }
         }
     }
+}
+
+@Composable
+fun ActSubjectCard(
+    subjectName: String,
+    accuracy: Int,
+    subjectColor: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    ActSubjectCard(
+        subjectName = subjectName,
+        accuracyText = "$accuracy% Acc",
+        subjectColor = subjectColor,
+        onClick = onClick,
+        modifier = modifier
+    )
 }
 
 @Composable

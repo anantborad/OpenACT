@@ -36,13 +36,17 @@ interface QuestionRepository {
     suspend fun getRecentSessions(limit: Int = 10): List<UserSessionEntity>
     suspend fun getSessionAnswers(sessionId: Long): List<UserAnswerEntity>
     suspend fun getSkillMastery(skillName: String): Pair<Int, Int> // (accuracyPercent, totalAttempts)
+    suspend fun getAllSkills(): List<String>
     suspend fun clearUserData()
+    suspend fun resetAllData()
 
     // User Profile Preferences
     fun getUserName(): String
     fun setUserName(name: String)
     fun getDailyGoal(): String
     fun setDailyGoal(goal: String)
+    fun getGoalActScore(): Int
+    fun setGoalActScore(score: Int)
     fun isOnboardingCompleted(): Boolean
     fun setOnboardingCompleted(completed: Boolean)
 }

@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
 data class ProfileState(
     val userName: String = "Alex",
     val dailyGoal: String = "3 sessions",
+    val goalActScore: Int = 32,
     val isEditingName: Boolean = false,
     val isEditingGoal: Boolean = false
 )
@@ -27,7 +28,8 @@ class ProfileViewModel(private val repository: QuestionRepository) : ViewModel()
     fun loadProfile() {
         val name = repository.getUserName()
         val goal = repository.getDailyGoal()
-        _uiState.value = ProfileState(userName = name, dailyGoal = goal)
+        val actScore = repository.getGoalActScore()
+        _uiState.value = ProfileState(userName = name, dailyGoal = goal, goalActScore = actScore)
     }
 
     fun updateName(newName: String) {
@@ -42,11 +44,23 @@ class ProfileViewModel(private val repository: QuestionRepository) : ViewModel()
         _uiState.value = _uiState.value.copy(dailyGoal = newGoal, isEditingGoal = false)
     }
 
+    fun updateGoalActScore(score: Int) {
+        repository.setGoalActScore(score)
+        _uiState.value = _uiState.value.copy(goalActScore = score)
+    }
+
     fun clearHistory(onCleared: () -> Unit = {}) {
         viewModelScope.launch {
             repository.clearUserData()
             loadProfile()
             onCleared()
+        }
+    }
+
+    fun resetAllData(onReset: () -> Unit = {}) {
+        viewModelScope.launch {
+            repository.resetAllData()
+            onReset()
         }
     }
 }

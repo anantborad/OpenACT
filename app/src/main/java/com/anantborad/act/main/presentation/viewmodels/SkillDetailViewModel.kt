@@ -35,28 +35,34 @@ class SkillDetailViewModel(private val repository: QuestionRepository) : ViewMod
 
             val concepts = when {
                 skillName.contains("Geometry", ignoreCase = true) -> listOf(
-                    "Coordinate Geometry Principles",
-                    "Slope and Intercept Calculations",
-                    "Distance and Midpoint Formulas",
-                    "Circle Equations and Properties"
+                    "Coordinate Geometry & Graphing Rules",
+                    "Slope, Distance, and Midpoint Formulas",
+                    "Circle Equations and Angle Properties",
+                    "Area, Perimeter, and Volume Calculations"
                 )
                 skillName.contains("Punctuation", ignoreCase = true) || skillName.contains("Grammar", ignoreCase = true) -> listOf(
-                    "Comma Splices and Run-ons",
-                    "Apostrophes and Possessives",
-                    "Semicolons and Colons Usage",
-                    "Subject-Verb Agreement Rules"
+                    "Comma Splices, Run-ons, and Fragments",
+                    "Apostrophes, Possessives, and Contractions",
+                    "Semicolons, Colons, and Dash Usage",
+                    "Subject-Verb and Pronoun Agreement Rules"
                 )
-                skillName.contains("Algebra", ignoreCase = true) -> listOf(
-                    "Linear Equations and Systems",
-                    "Quadratic Functions and Factoring",
-                    "Exponents and Radicals Rules",
-                    "Inequalities and Absolute Value"
+                skillName.contains("Algebra", ignoreCase = true) || skillName.contains("Functions", ignoreCase = true) -> listOf(
+                    "Linear Equations and Systems of Equations",
+                    "Quadratic Functions, Factoring, and Polynomials",
+                    "Exponents, Radicals, and Logarithms",
+                    "Inequalities and Absolute Value Operations"
+                )
+                skillName.contains("Reading", ignoreCase = true) || skillName.contains("Passage", ignoreCase = true) || skillName.contains("Narrative", ignoreCase = true) -> listOf(
+                    "Main Idea and Paragraph Purpose Identification",
+                    "Vocabulary in Context and Tone Analysis",
+                    "Inferences and Supporting Evidence Location",
+                    "Comparative Passage Analysis Strategies"
                 )
                 else -> listOf(
-                    "Core Principles & Rules",
-                    "Key Problem Solving Steps",
-                    "Common ACT Question Pitfalls",
-                    "Speed and Accuracy Strategies"
+                    "Core Principles & Rule Definitions for $skillName",
+                    "Key Problem Solving & Step-by-Step Approaches",
+                    "Common ACT Question Pitfalls & Traps",
+                    "Speed, Pacing, and Accuracy Strategies"
                 )
             }
 

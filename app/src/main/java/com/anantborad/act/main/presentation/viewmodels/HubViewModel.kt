@@ -11,16 +11,9 @@ import kotlinx.coroutines.launch
 
 data class HubState(
     val searchQuery: String = "",
-    val allSkills: List<String> = listOf(
-        "Coordinate Geometry",
-        "Punctuation & Grammar",
-        "Algebra & Functions",
-        "Passage Analysis",
-        "Trigonometry",
-        "Sentence Structure"
-    ),
+    val allSkills: List<String> = emptyList(),
     val filteredSkills: List<String> = emptyList(),
-    val subjectAccuracies: Map<PracticeSubject, Int> = emptyMap(),
+    val subjectAccuracies: Map<PracticeSubject, Pair<Int, Boolean>> = emptyMap(), // subject to (accuracy, hasPracticed)
     val isLoading: Boolean = false
 )
 
@@ -38,18 +31,22 @@ class HubViewModel(private val repository: QuestionRepository) : ViewModel() {
             _uiState.value = _uiState.value.copy(isLoading = true)
             try {
                 val stats = repository.getUserStats()
+                val skills = repository.getAllSkills()
                 val accuracies = stats.subjects.associate { stat ->
                     val subject = when (stat.name.lowercase()) {
                         "english" -> PracticeSubject.ENGLISH
                         "math" -> PracticeSubject.MATH
                         else -> PracticeSubject.READING
                     }
-                    subject to stat.accuracy
+                    subject to Pair(stat.accuracy, stat.hasPracticed)
                 }
-                val currentSkills = _uiState.value.allSkills
+                val filtered = if (_uiState.value.searchQuery.isBlank()) skills else skills.filter {
+                    it.contains(_uiState.value.searchQuery, ignoreCase = true)
+                }
                 _uiState.value = _uiState.value.copy(
+                    allSkills = skills,
+                    filteredSkills = filtered,
                     subjectAccuracies = accuracies,
-                    filteredSkills = currentSkills,
                     isLoading = false
                 )
             } catch (e: Exception) {

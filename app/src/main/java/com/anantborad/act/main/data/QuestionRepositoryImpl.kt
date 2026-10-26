@@ -171,50 +171,34 @@ class QuestionRepositoryImpl(
 
         val userName = getUserName()
         val totalQuestions = answers.size
-
-        if (sessions.isEmpty()) {
-            return@withContext UserStats(
-                name = userName,
-                streak = calculateStreak(sessions),
-                dailyGoal = "0/3 sessions",
-                accuracy = 0,
-                totalQuestions = 0,
-                subjects = listOf(
-                    SubjectStats("English", 0, "0%"),
-                    SubjectStats("Math", 0, "0%"),
-                    SubjectStats("Reading", 0, "0%")
-                ),
-                weakSkills = listOf(
-                    SkillStat("Geometry", "Math", 0),
-                    SkillStat("Punctuation", "English", 0)
-                )
-            )
-        }
+        val goalScore = getGoalActScore()
+        val targetAcc = calculateTargetAccuracy(goalScore)
 
         val overallAccuracy = if (totalQuestions > 0) {
             (answers.count { it.isCorrect } * 100) / totalQuestions
         } else 0
 
         val subjectStats = PracticeSubject.values().map { subject ->
-            val subjectAnswers = answers.filter { it.subject.equals(subject.name, ignoreCase = true) }
-            val accuracy = if (subjectAnswers.isNotEmpty()) {
-                (subjectAnswers.count { it.isCorrect } * 100) / subjectAnswers.size
-            } else 0
-            SubjectStats(subject.displayName, accuracy, "+0%")
+            val recentSubjectSession = sessions.firstOrNull { it.subject.equals(subject.name, ignoreCase = true) }
+            if (recentSubjectSession != null && recentSubjectSession.totalQuestions > 0) {
+                val acc = (recentSubjectSession.score * 100) / recentSubjectSession.totalQuestions
+                SubjectStats(subject.displayName, acc, "Latest", hasPracticed = true)
+            } else {
+                SubjectStats(subject.displayName, 0, "--", hasPracticed = false)
+            }
         }
 
-        // Weakest skills calculation
-        val skillGroups = answers.groupBy { it.skill }
-        val weakSkillsList = skillGroups.map { (skill, list) ->
-            val acc = if (list.isNotEmpty()) (list.count { it.isCorrect } * 100) / list.size else 0
-            val subject = list.firstOrNull()?.subject ?: "General"
-            SkillStat(skill, subject, acc)
-        }.sortedBy { it.accuracy }.take(2)
-
-        val fallbackWeakSkills = if (weakSkillsList.isNotEmpty()) weakSkillsList else listOf(
-            SkillStat("Geometry", "Math", 45),
-            SkillStat("Punctuation", "English", 52)
-        )
+        // Weakest skills calculation - return empty if no answer history exists
+        val weakSkillsList = if (answers.isNotEmpty()) {
+            val skillGroups = answers.groupBy { it.skill }
+            skillGroups.map { (skill, list) ->
+                val acc = if (list.isNotEmpty()) (list.count { it.isCorrect } * 100) / list.size else 0
+                val subject = list.firstOrNull()?.subject ?: "General"
+                SkillStat(skill, subject, acc)
+            }.sortedBy { it.accuracy }.take(2)
+        } else {
+            emptyList()
+        }
 
         val todayStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
         val todaySessions = sessions.count {
@@ -229,8 +213,25 @@ class QuestionRepositoryImpl(
             accuracy = overallAccuracy,
             totalQuestions = totalQuestions,
             subjects = subjectStats,
-            weakSkills = fallbackWeakSkills
+            weakSkills = weakSkillsList,
+            goalActScore = goalScore,
+            targetAccuracy = targetAcc
         )
+    }
+
+    private fun calculateTargetAccuracy(score: Int): Int {
+        return when {
+            score >= 36 -> 96
+            score >= 35 -> 94
+            score >= 34 -> 92
+            score >= 33 -> 90
+            score >= 32 -> 88
+            score >= 31 -> 85
+            score >= 30 -> 83
+            score >= 28 -> 78
+            score >= 25 -> 70
+            else -> ((score / 36.0) * 100).toInt().coerceIn(40, 100)
+        }
     }
 
     private fun calculateStreak(sessions: List<UserSessionEntity>): Int {
@@ -320,11 +321,31 @@ class QuestionRepositoryImpl(
         }
     }
 
+    override suspend fun getAllSkills(): List<String> = withContext(Dispatchers.IO) {
+        ensureDatabasePopulated()
+        val mathCategories = questionDao.getMathCategories()
+        val readingPassages = questionDao.getAllReadingPassages().map { it.passageType }
+        val englishTopics = listOf(
+            "Grammar & Punctuation",
+            "Sentence Structure",
+            "Passage Analysis",
+            "Usage & Style"
+        )
+        (mathCategories + readingPassages + englishTopics).distinct().sorted()
+    }
+
     override suspend fun clearUserData() = withContext(Dispatchers.IO) {
         questionDao.clearSessions()
         questionDao.clearAnswers()
         lastSessionQuestions = emptyList()
         lastSessionAnswers = emptyMap()
+    }
+
+    override suspend fun resetAllData() = withContext(Dispatchers.IO) {
+        clearUserData()
+        sharedPrefs.edit().clear().commit()
+        isPopulated = false
+        ensureDatabasePopulated()
     }
 
     override fun getUserName(): String {
@@ -343,6 +364,14 @@ class QuestionRepositoryImpl(
     override fun setDailyGoal(goal: String) {
         val target = goal.filter { it.isDigit() }.toIntOrNull() ?: 3
         sharedPrefs.edit().putInt("daily_goal_target", target).apply()
+    }
+
+    override fun getGoalActScore(): Int {
+        return sharedPrefs.getInt("goal_act_score", 32)
+    }
+
+    override fun setGoalActScore(score: Int) {
+        sharedPrefs.edit().putInt("goal_act_score", score).apply()
     }
 
     override fun isOnboardingCompleted(): Boolean {
@@ -386,8 +415,8 @@ class QuestionRepositoryImpl(
                                 text = q.questionText,
                                 passage = passageStr,
                                 options = q.options.map { QuestionOption(it.key, it.key, it.value) },
-                                correctOptionId = q.options.firstOrNull()?.key ?: "A",
-                                explanation = "Choose the option that adheres to ACT English standards for clarity and standard written conventions."
+                                correctOptionId = q.answer ?: q.options.firstOrNull()?.key ?: "A",
+                                explanation = q.explanation ?: "Select the option that adheres to ACT English standards for standard written conventions, conciseness, and clarity."
                             )
                         }
                     }

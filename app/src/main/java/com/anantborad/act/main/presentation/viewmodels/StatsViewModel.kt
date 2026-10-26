@@ -13,6 +13,8 @@ import kotlinx.coroutines.launch
 data class StatsState(
     val userStats: UserStats? = null,
     val recentSessions: List<UserSessionEntity> = emptyList(),
+    val goalActScore: Int = 32,
+    val targetAccuracy: Int = 88,
     val isLoading: Boolean = false,
     val error: String? = null
 )
@@ -32,9 +34,12 @@ class StatsViewModel(private val repository: QuestionRepository) : ViewModel() {
             try {
                 val stats = repository.getUserStats()
                 val recent = repository.getRecentSessions(10)
+                val goalScore = repository.getGoalActScore()
                 _uiState.value = _uiState.value.copy(
                     userStats = stats,
                     recentSessions = recent,
+                    goalActScore = goalScore,
+                    targetAccuracy = stats.targetAccuracy,
                     isLoading = false
                 )
             } catch (e: Exception) {

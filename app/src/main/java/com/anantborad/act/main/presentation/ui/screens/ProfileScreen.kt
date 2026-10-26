@@ -29,16 +29,20 @@ import com.anantborad.act.core.ui.theme.BlueprintBlue
 import com.anantborad.act.main.presentation.ui.components.ActHeader
 import com.anantborad.act.main.presentation.viewmodels.ProfileViewModel
 
+import androidx.compose.material.icons.filled.Star
+
 @Composable
 fun ProfileScreen(
     viewModel: ProfileViewModel,
-    onBackClick: () -> Unit = {}
+    onBackClick: () -> Unit = {},
+    onRestartOnboarding: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showEditNameDialog by remember { mutableStateOf(false) }
     var newNameText by remember { mutableStateOf(uiState.userName) }
 
-    var showClearDialog by remember { mutableStateOf(false) }
+    var showGoalScoreDialog by remember { mutableStateOf(false) }
+    var showResetAllDialog by remember { mutableStateOf(false) }
 
     if (showEditNameDialog) {
         AlertDialog(
@@ -69,21 +73,60 @@ fun ProfileScreen(
         )
     }
 
-    if (showClearDialog) {
+    if (showGoalScoreDialog) {
         AlertDialog(
-            onDismissRequest = { showClearDialog = false },
-            title = { Text("Reset Progress Data") },
-            text = { Text("Are you sure you want to clear all your practice session history and reset statistics? This cannot be undone.") },
+            onDismissRequest = { showGoalScoreDialog = false },
+            title = { Text("Target ACT Score") },
+            text = {
+                Column {
+                    Text("Select your goal ACT score to adjust your target accuracy benchmark:")
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        listOf(24, 28, 30, 32, 34, 36).forEach { score ->
+                            FilterChip(
+                                selected = uiState.goalActScore == score,
+                                onClick = {
+                                    viewModel.updateGoalActScore(score)
+                                    showGoalScoreDialog = false
+                                },
+                                label = { Text(score.toString()) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = BlueprintBlue,
+                                    selectedLabelColor = Color.White
+                                )
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showGoalScoreDialog = false }) {
+                    Text("Done")
+                }
+            }
+        )
+    }
+
+    if (showResetAllDialog) {
+        AlertDialog(
+            onDismissRequest = { showResetAllDialog = false },
+            title = { Text("Reset All Data & Restart Onboarding") },
+            text = { Text("Are you sure you want to reset all app settings, clear practice history, and return to onboarding? This cannot be undone.") },
             confirmButton = {
                 TextButton(onClick = {
-                    viewModel.clearHistory()
-                    showClearDialog = false
+                    showResetAllDialog = false
+                    viewModel.resetAllData {
+                        onRestartOnboarding()
+                    }
                 }) {
-                    Text("Reset Data", color = Color.Red)
+                    Text("Reset Everything", color = Color.Red, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showClearDialog = false }) {
+                TextButton(onClick = { showResetAllDialog = false }) {
                     Text("Cancel")
                 }
             }
@@ -148,23 +191,28 @@ fun ProfileScreen(
                     }
                 }
                 Text(
-                    text = "Daily Goal: ${uiState.dailyGoal}",
+                    text = "Goal Score: ${uiState.goalActScore} ACT • Daily: ${uiState.dailyGoal}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
             // Settings sections
             ProfileSection("Preferences") {
                 ProfileMenuItem(
                     icon = Icons.Default.Person,
-                    title = "Edit Name",
+                    title = "Edit Name (${uiState.userName})",
                     onClick = {
                         newNameText = uiState.userName
                         showEditNameDialog = true
                     }
+                )
+                ProfileMenuItem(
+                    icon = Icons.Default.Star,
+                    title = "Goal ACT Score (${uiState.goalActScore} ACT)",
+                    onClick = { showGoalScoreDialog = true }
                 )
                 ProfileMenuItem(
                     icon = Icons.Default.Adjust,
@@ -181,9 +229,9 @@ fun ProfileScreen(
             ProfileSection("Data & Privacy") {
                 ProfileMenuItem(
                     icon = Icons.Default.Refresh,
-                    title = "Reset Practice History",
+                    title = "Reset All Data & Restart Onboarding",
                     color = Color.Red,
-                    onClick = { showClearDialog = true }
+                    onClick = { showResetAllDialog = true }
                 )
             }
 

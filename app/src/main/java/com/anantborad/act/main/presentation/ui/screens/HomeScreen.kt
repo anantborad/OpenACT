@@ -118,7 +118,7 @@ fun HomeScreen(
                 ActGradientButton(
                     onClick = onQuickStartClick,
                     title = "Quick Start",
-                    subtitle = "3-minute mixed practice",
+                    subtitle = "5 questions • Mixed practice",
                     icon = {
                         Icon(
                             imageVector = Icons.Default.RocketLaunch,
@@ -164,7 +164,7 @@ fun HomeScreen(
                         }
                         ActSubjectCard(
                             subjectName = subjectStat.name,
-                            accuracy = subjectStat.accuracy,
+                            accuracyText = subjectStat.displayAccuracy,
                             subjectColor = color,
                             onClick = { onSubjectClick(subject) }
                         )

@@ -120,7 +120,8 @@ fun ActNavHost() {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable<OnboardingRoute> {
-                OnboardingScreen(onFinish = {
+                OnboardingScreen(onFinish = { goalScore ->
+                    repository.setGoalActScore(goalScore)
                     repository.setOnboardingCompleted(true)
                     navController.navigate(HomeRoute) {
                         popUpTo(OnboardingRoute) { inclusive = true }
@@ -138,7 +139,13 @@ fun ActNavHost() {
                 HomeScreen(
                     viewModel = viewModel,
                     onQuickStartClick = { 
-                        navController.navigate(SessionRoute(subject = PracticeSubject.MATH.name)) 
+                        val randomSubject = PracticeSubject.values().random().name
+                        navController.navigate(
+                            SessionRoute(
+                                subject = randomSubject,
+                                questionCount = 5
+                            )
+                        ) 
                     },
                     onSubjectClick = { subject -> 
                         navController.navigate(SetupRoute(subject.name))
@@ -271,7 +278,12 @@ fun ActNavHost() {
                 )
                 ProfileScreen(
                     viewModel = viewModel,
-                    onBackClick = { navController.popBackStack() }
+                    onBackClick = { navController.popBackStack() },
+                    onRestartOnboarding = {
+                        navController.navigate(OnboardingRoute) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
                 )
             }
             composable<ProgressRoute> {

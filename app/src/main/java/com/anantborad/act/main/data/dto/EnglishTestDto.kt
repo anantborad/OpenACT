@@ -40,7 +40,9 @@ data class QuestionDto(
     val linkedHighlightId: String? = null,
     @SerialName("question_text")
     val questionText: String,
-    val options: List<QuestionOptionDto>
+    val options: List<QuestionOptionDto>,
+    val answer: String? = null,
+    val explanation: String? = null
 )
 
 @Serializable
