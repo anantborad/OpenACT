@@ -74,37 +74,54 @@ fun ProfileScreen(
     }
 
     if (showGoalScoreDialog) {
+        var tempScore by remember(uiState.goalActScore) { mutableIntStateOf(uiState.goalActScore) }
         AlertDialog(
             onDismissRequest = { showGoalScoreDialog = false },
             title = { Text("Target ACT Score") },
             text = {
-                Column {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("Select your goal ACT score to adjust your target accuracy benchmark:")
                     Spacer(modifier = Modifier.height(16.dp))
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    Text(
+                        text = "$tempScore ACT",
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = BlueprintBlue
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Slider(
+                        value = tempScore.toFloat(),
+                        onValueChange = { tempScore = it.toInt() },
+                        valueRange = 20f..36f,
+                        steps = 15,
+                        colors = SliderDefaults.colors(
+                            thumbColor = BlueprintBlue,
+                            activeTrackColor = BlueprintBlue,
+                            inactiveTrackColor = BlueprintBlue.copy(alpha = 0.2f)
+                        ),
                         modifier = Modifier.fillMaxWidth()
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        listOf(24, 28, 30, 32, 34, 36).forEach { score ->
-                            FilterChip(
-                                selected = uiState.goalActScore == score,
-                                onClick = {
-                                    viewModel.updateGoalActScore(score)
-                                    showGoalScoreDialog = false
-                                },
-                                label = { Text(score.toString()) },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = BlueprintBlue,
-                                    selectedLabelColor = Color.White
-                                )
-                            )
-                        }
+                        Text("20", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("28", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("36", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             },
             confirmButton = {
+                TextButton(onClick = {
+                    viewModel.updateGoalActScore(tempScore)
+                    showGoalScoreDialog = false
+                }) {
+                    Text("Save")
+                }
+            },
+            dismissButton = {
                 TextButton(onClick = { showGoalScoreDialog = false }) {
-                    Text("Done")
+                    Text("Cancel")
                 }
             }
         )

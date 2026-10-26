@@ -10,11 +10,18 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+enum class StatsTimeframe(val label: String, val sessionLimit: Int?) {
+    LAST_5("Last 5 Sessions", 5),
+    LAST_10("Last 10 Sessions", 10),
+    ALL_TIME("All Time", null)
+}
+
 data class StatsState(
     val userStats: UserStats? = null,
     val recentSessions: List<UserSessionEntity> = emptyList(),
     val goalActScore: Int = 32,
     val targetAccuracy: Int = 88,
+    val selectedTimeframe: StatsTimeframe = StatsTimeframe.ALL_TIME,
     val isLoading: Boolean = false,
     val error: String? = null
 )
@@ -28,11 +35,17 @@ class StatsViewModel(private val repository: QuestionRepository) : ViewModel() {
         loadStats()
     }
 
+    fun setTimeframe(timeframe: StatsTimeframe) {
+        _uiState.value = _uiState.value.copy(selectedTimeframe = timeframe)
+        loadStats()
+    }
+
     fun loadStats() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
             try {
-                val stats = repository.getUserStats()
+                val timeframe = _uiState.value.selectedTimeframe
+                val stats = repository.getUserStats(timeframe.sessionLimit)
                 val recent = repository.getRecentSessions(10)
                 val goalScore = repository.getGoalActScore()
                 _uiState.value = _uiState.value.copy(

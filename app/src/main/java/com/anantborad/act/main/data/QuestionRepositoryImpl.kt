@@ -165,9 +165,22 @@ class QuestionRepositoryImpl(
         }
     }
 
-    override suspend fun getUserStats(): UserStats = withContext(Dispatchers.IO) {
-        val sessions = questionDao.getAllSessions()
-        val answers = questionDao.getAllUserAnswers()
+    override suspend fun getUserStats(sessionLimit: Int?): UserStats = withContext(Dispatchers.IO) {
+        val allSessions = questionDao.getAllSessions()
+        val sessions = if (sessionLimit != null && sessionLimit > 0) {
+            allSessions.take(sessionLimit)
+        } else {
+            allSessions
+        }
+
+        val answers = if (sessions.isEmpty()) {
+            emptyList()
+        } else if (sessionLimit != null && sessionLimit > 0) {
+            val sessionIds = sessions.map { it.id }.toSet()
+            questionDao.getAllUserAnswers().filter { it.sessionId in sessionIds }
+        } else {
+            questionDao.getAllUserAnswers()
+        }
 
         val userName = getUserName()
         val totalQuestions = answers.size
@@ -179,12 +192,18 @@ class QuestionRepositoryImpl(
         } else 0
 
         val subjectStats = PracticeSubject.values().map { subject ->
-            val recentSubjectSession = sessions.firstOrNull { it.subject.equals(subject.name, ignoreCase = true) }
-            if (recentSubjectSession != null && recentSubjectSession.totalQuestions > 0) {
-                val acc = (recentSubjectSession.score * 100) / recentSubjectSession.totalQuestions
-                SubjectStats(subject.displayName, acc, "Latest", hasPracticed = true)
+            val subjectAnswers = answers.filter { it.subject.equals(subject.name, ignoreCase = true) }
+            if (subjectAnswers.isNotEmpty()) {
+                val acc = (subjectAnswers.count { it.isCorrect } * 100) / subjectAnswers.size
+                SubjectStats(subject.displayName, acc, "Overall", hasPracticed = true)
             } else {
-                SubjectStats(subject.displayName, 0, "--", hasPracticed = false)
+                val recentSubjectSession = sessions.firstOrNull { it.subject.equals(subject.name, ignoreCase = true) }
+                if (recentSubjectSession != null && recentSubjectSession.totalQuestions > 0) {
+                    val acc = (recentSubjectSession.score * 100) / recentSubjectSession.totalQuestions
+                    SubjectStats(subject.displayName, acc, "Latest", hasPracticed = true)
+                } else {
+                    SubjectStats(subject.displayName, 0, "--", hasPracticed = false)
+                }
             }
         }
 
@@ -193,22 +212,28 @@ class QuestionRepositoryImpl(
             val skillGroups = answers.groupBy { it.skill }
             skillGroups.map { (skill, list) ->
                 val acc = if (list.isNotEmpty()) (list.count { it.isCorrect } * 100) / list.size else 0
-                val subject = list.firstOrNull()?.subject ?: "General"
-                SkillStat(skill, subject, acc)
+                val rawSubject = list.firstOrNull()?.subject ?: "General"
+                val formattedSubject = when (rawSubject.uppercase()) {
+                    "ENGLISH" -> "English"
+                    "MATH" -> "Math"
+                    "READING" -> "Reading"
+                    else -> rawSubject.lowercase().replaceFirstChar { it.uppercase() }
+                }
+                SkillStat(skill, formattedSubject, acc)
             }.sortedBy { it.accuracy }.take(2)
         } else {
             emptyList()
         }
 
         val todayStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-        val todaySessions = sessions.count {
+        val todaySessions = allSessions.count {
             SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(it.timestamp)) == todayStr
         }
         val targetGoal = sharedPrefs.getInt("daily_goal_target", 3)
 
         UserStats(
             name = userName,
-            streak = calculateStreak(sessions),
+            streak = calculateStreak(allSessions),
             dailyGoal = "$todaySessions/$targetGoal sessions",
             accuracy = overallAccuracy,
             totalQuestions = totalQuestions,

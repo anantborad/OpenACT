@@ -13,7 +13,7 @@ interface QuestionRepository {
     suspend fun getEnglishTests(): List<EnglishTestUiModel>
     suspend fun getMathTests(): List<MathTestUiModel>
     suspend fun getReadingTests(): List<ReadingPassageUiModel>
-    suspend fun getUserStats(): UserStats
+    suspend fun getUserStats(sessionLimit: Int? = null): UserStats
     suspend fun getPracticeQuestions(
         subject: PracticeSubject,
         limit: Int = 10,

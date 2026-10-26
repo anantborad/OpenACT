@@ -67,7 +67,8 @@ fun OnboardingScreen(
             selectedGoalScore >= 30 -> 83
             selectedGoalScore >= 28 -> 78
             selectedGoalScore >= 25 -> 70
-            else -> 65
+            selectedGoalScore >= 22 -> 62
+            else -> 55
         }
     }
 
@@ -114,28 +115,43 @@ fun OnboardingScreen(
                     )
 
                     if (pageIndex == 3) {
-                        Spacer(modifier = Modifier.height(28.dp))
+                        Spacer(modifier = Modifier.height(20.dp))
                         Text(
                             text = "Select Goal ACT Score",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "$selectedGoalScore ACT",
+                            style = MaterialTheme.typography.displayMedium,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = BlueprintBlue
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Column(
                             modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            listOf(24, 28, 30, 32, 34, 36).forEach { score ->
-                                FilterChip(
-                                    selected = selectedGoalScore == score,
-                                    onClick = { selectedGoalScore = score },
-                                    label = { Text(score.toString()) },
-                                    colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = BlueprintBlue,
-                                        selectedLabelColor = Color.White
-                                    )
-                                )
+                            Slider(
+                                value = selectedGoalScore.toFloat(),
+                                onValueChange = { selectedGoalScore = it.toInt() },
+                                valueRange = 20f..36f,
+                                steps = 15,
+                                colors = SliderDefaults.colors(
+                                    thumbColor = BlueprintBlue,
+                                    activeTrackColor = BlueprintBlue,
+                                    inactiveTrackColor = BlueprintBlue.copy(alpha = 0.2f)
+                                ),
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("20", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text("28", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text("36", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                         Spacer(modifier = Modifier.height(16.dp))
