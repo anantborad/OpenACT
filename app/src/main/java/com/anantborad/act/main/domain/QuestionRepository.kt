@@ -39,6 +39,7 @@ interface QuestionRepository {
     suspend fun getAllSkills(): List<String>
     suspend fun clearUserData()
     suspend fun resetAllData()
+    suspend fun populateDummyData()
 
     // User Profile Preferences
     fun getUserName(): String

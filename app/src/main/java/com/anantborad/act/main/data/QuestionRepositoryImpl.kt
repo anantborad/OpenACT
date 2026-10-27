@@ -366,6 +366,52 @@ class QuestionRepositoryImpl(
         lastSessionAnswers = emptyMap()
     }
 
+    override suspend fun populateDummyData() = withContext(Dispatchers.IO) {
+        clearUserData()
+        setGoalActScore(32)
+
+        val currentTime = System.currentTimeMillis()
+        val dayMillis = 24 * 60 * 60 * 1000L
+
+        val dummySessionsData = listOf(
+            Triple(PracticeSubject.ENGLISH, 7, "Grammar & Punctuation"),
+            Triple(PracticeSubject.MATH, 8, "Algebra"),
+            Triple(PracticeSubject.READING, 8, "Literary Narrative"),
+            Triple(PracticeSubject.ENGLISH, 9, "Sentence Structure"),
+            Triple(PracticeSubject.MATH, 9, "Geometry"),
+            Triple(PracticeSubject.READING, 10, "Social Science"),
+            Triple(PracticeSubject.ENGLISH, 10, "Grammar & Punctuation")
+        )
+
+        dummySessionsData.forEachIndexed { index, (subject, score, skill) ->
+            val timestamp = currentTime - ((dummySessionsData.size - 1 - index) * dayMillis)
+            val sessionEntity = UserSessionEntity(
+                subject = subject.name,
+                score = score,
+                totalQuestions = 10,
+                timeSeconds = 300L + (index * 15L),
+                difficulty = if (index < 3) "Medium" else "Hard",
+                timestamp = timestamp
+            )
+            val sessionId = questionDao.insertUserSession(sessionEntity)
+
+            val answerEntities = (1..10).map { qIndex ->
+                val isCorrect = qIndex <= score
+                UserAnswerEntity(
+                    sessionId = sessionId,
+                    questionId = "dummy_${index}_$qIndex",
+                    subject = subject.name,
+                    skill = skill,
+                    selectedOptionId = if (isCorrect) "A" else "B",
+                    correctOptionId = "A",
+                    isCorrect = isCorrect,
+                    timestamp = timestamp
+                )
+            }
+            questionDao.insertUserAnswers(answerEntities)
+        }
+    }
+
     override suspend fun resetAllData() = withContext(Dispatchers.IO) {
         clearUserData()
         sharedPrefs.edit().clear().commit()

@@ -57,6 +57,14 @@ class ProfileViewModel(private val repository: QuestionRepository) : ViewModel()
         }
     }
 
+    fun populateDummyData(onSuccess: () -> Unit = {}) {
+        viewModelScope.launch {
+            repository.populateDummyData()
+            loadProfile()
+            onSuccess()
+        }
+    }
+
     fun resetAllData(onReset: () -> Unit = {}) {
         viewModelScope.launch {
             repository.resetAllData()

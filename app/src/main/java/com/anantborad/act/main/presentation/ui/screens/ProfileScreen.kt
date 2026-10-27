@@ -30,6 +30,8 @@ import com.anantborad.act.main.presentation.ui.components.ActHeader
 import com.anantborad.act.main.presentation.viewmodels.ProfileViewModel
 
 import androidx.compose.material.icons.filled.Star
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun ProfileScreen(
@@ -37,6 +39,7 @@ fun ProfileScreen(
     onBackClick: () -> Unit = {},
     onRestartOnboarding: () -> Unit = {}
 ) {
+    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     var showEditNameDialog by remember { mutableStateOf(false) }
     var newNameText by remember { mutableStateOf(uiState.userName) }
@@ -249,6 +252,16 @@ fun ProfileScreen(
                     title = "Reset All Data & Restart Onboarding",
                     color = Color.Red,
                     onClick = { showResetAllDialog = true }
+                )
+                ProfileMenuItem(
+                    icon = Icons.Default.Star,
+                    title = "Load Demo Stats (32 ACT Upward Trend)",
+                    color = BlueprintBlue,
+                    onClick = {
+                        viewModel.populateDummyData {
+                            Toast.makeText(context, "Demo stats populated! Goal ACT set to 32.", Toast.LENGTH_SHORT).show()
+                        }
+                    }
                 )
             }
 
